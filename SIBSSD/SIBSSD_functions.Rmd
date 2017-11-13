@@ -1,0 +1,123 @@
+---
+title: "SIBSSD_functions"
+output: html_document
+---
+
+```{r}
+generateSSD <- function(N,m){
+  SSD <- matrix(NA,N,m)
+  tem <- c(rep(-1,N/2),rep(1,N/2))
+  for(i in 1:m){
+    SSD[,i] <- sample(tem,N)
+  }
+  return(SSD)
+}
+```
+
+```{r}
+evaluateEs2 <- function(SSD){
+  index.matrix <- combn(ncol(SSD),2)
+  Es2 <- 0
+  for(i in 1:ncol(index.matrix)){
+    Es2 <- (SSD[,index.matrix[,i][1]] %*% SSD[,index.matrix[,i][2]])^2 + Es2 
+  }
+  return(Es2/choose(ncol(SSD), 2))
+}
+```
+
+
+```{r}
+mixOperation <- function(particle, SIBSSD.list, LB, GB, qLB, qGB){
+  mixwLB <- list()
+  mixwGB <- list()
+  for(i in 1:particle){
+    worksheet <- SIBSSD.list[[i]]
+    
+    ###mixwLB###
+    #column deletion step 
+    tem <- worksheet
+    for(j in 1:qLB){
+      lack.value <- numeric(ncol(tem))
+      for(k in 1:ncol(tem)){
+        lack.value[k] <- evaluateEs2(tem[,-k])
+      }
+      tem <- tem[,-which.min(lack.value)]
+    }
+    
+    
+    #column addition step
+    add.matrix <- LB[[i]]$design
+    for(j in 1:qLB){
+      add.value <- numeric(ncol(add.matrix))   #?
+      for(k in 1:ncol(add.matrix)){
+        add.value[k] <- evaluateEs2(cbind(tem,add.matrix[,k]))
+      }
+      tem <- cbind(tem,add.matrix[,which.min(add.value)])
+    }
+    
+    mixwLB[[i]] <- list(design = tem,value = evaluateEs2(tem))  #important value
+    
+    ###mixwGB###
+    #column deletion step 
+    tem <- worksheet
+    for(j in 1:qGB){
+      lack.value <- numeric(ncol(tem))
+      for(k in 1:ncol(tem)){
+        lack.value[k] <- evaluateEs2(tem[,-k])
+      }
+      tem <- tem[,-which.min(lack.value)]
+    }
+    
+    #column addition step
+    add.matrix <- GB$design
+    for(j in 1:qGB){
+      add.value <- numeric(ncol(tem))
+      for(k in 1:ncol(add.matrix)){
+        add.value[k] <- evaluateEs2(cbind(tem,add.matrix[,k]))
+      }
+      tem <- cbind(tem,add.matrix[,which.min(add.value)])
+      
+    }
+    
+    mixwGB[[i]] <- list(design = tem,value = evaluateEs2(tem))  #important value
+    
+    
+    #column addition step
+  }
+  return(list(mixwLB = mixwLB, mixwGB = mixwGB))
+  
+}
+```
+
+
+
+```{r}
+moveOperation <- function(particle, SIBSSD.list, mixwLB, mixwGB, qLB, qGB){
+  for(i in 1:particle){
+    
+    #move to mixwGB
+    if(mixwGB[[i]]$value < mixwLB[[i]]$value && mixwGB[[i]]$value < evaluateEs2(SIBSSD.list[[i]])){
+      SIBSSD.list[[i]] <- mixwGB[[i]]$design 
+    
+    #move to mixwGLB  
+    }else if(mixwLB[[i]]$value < mixwGB[[i]]$value && mixwLB[[i]]$value < evaluateEs2(SIBSSD.list[[i]])){
+      SIBSSD.list[[i]] <- mixwLB[[i]]$design  
+    
+    #move to mixwRC  
+    }else{
+      replace.index <- sample(m,qLB)
+      replace.col <- generateSSD(N = N,m = qLB)
+      
+      SIBSSD.list[[i]][,replace.index] <- replace.col 
+    }
+  }
+  return(SIBSSD.list)
+}
+```
+
+
+
+
+
+
+
