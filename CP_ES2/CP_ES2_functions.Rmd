@@ -1,0 +1,78 @@
+---
+title: "CP_ES2_functions"
+output: html_document
+---
+
+```{r}
+generateSSD <- function(N,m){
+  SSD <- matrix(NA,N,m)
+  tem <- c(rep(-1,N/2),rep(1,N/2))
+  for(i in 1:m){
+    SSD[,i] <- sample(tem,N)
+  }
+  return(SSD)
+}
+```
+
+```{r}
+evaluateEs2 <- function(SSD){
+  index.matrix <- combn(ncol(SSD),2)
+  Es2 <- 0
+  for(i in 1:ncol(index.matrix)){
+    Es2 <- (SSD[,index.matrix[,i][1]] %*% SSD[,index.matrix[,i][2]])^2 + Es2 
+  }
+  return(Es2/choose(ncol(SSD), 2))
+}
+```
+
+```{r}
+deleteOperation <- function(design){
+  delete.value <- numeric(ncol(design))
+  for(i in 1:ncol(design)){
+    delete.value[i] <- evaluateEs2(design[ ,-i])  
+  }
+  delete.column <- design[,which.min(delete.value)]
+  design <- design[,-which.min(delete.value)]
+  
+  
+  return(list(design = design, delete.column = delete.column))
+}
+```
+
+```{r}
+adjustOperation <- function(column){
+  candidate <- c()
+  positive.index <- which(column == 1)
+  nagtive.index <- which(column == -1)
+  
+  for(i in 1:ncol(combn(length(column)/2, 1))){
+    for(j in 1:ncol(combn(length(column)/2, 1))){
+      tem.column <- column
+      
+      #1 to -1
+      tem.column[positive.index[change.index[,i]]] <- -1
+      
+      #-1 to 1
+      tem.column[nagtive.index[change.index[,j]]] <- 1
+      candidate <- cbind(candidate, tem.column)     
+    }
+  }
+  
+  colnames(candidate) <- NULL
+  return(candidate)
+}
+```
+
+```{r}
+addOperation <- function(design, candidate.set){
+  add.value <- numeric(ncol(candidate.set))
+  for(i in 1:ncol(candidate.set)){
+    add.value[i] <- evaluateEs2(cbind(design, candidate.set[,i])) 
+  }
+  
+  design <- cbind(design, candidate.set[,which.min(add.value)])
+  return(list(design = design, value = min(add.value)))
+}
+```
+
+
