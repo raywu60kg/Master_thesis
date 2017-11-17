@@ -77,7 +77,10 @@ columewisePairwise <- function(starting.design, N, m){
 }
 
 ```
+$value
+[1] 6.928105
 
+53946.2 sec elapsed
 ```{r}
 library(tictoc)
 tic()
@@ -86,13 +89,5 @@ m = 18
 columewisePairwise(starting.design = 1000000,N = 10, m = 18)
 toc()
 ```
-```{r}
-tryCatch({
-     a<-'abc'
-     b<-1
-     c<-b/a
- }, error = function(err) {
-     print(paste("MY_ERROR:  ",err))
-})
-```
+
 

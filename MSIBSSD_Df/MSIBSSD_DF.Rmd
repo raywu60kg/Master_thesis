@@ -30,7 +30,7 @@ source_rmd <- function(file, local = FALSE, ...){
 #read functions
 ```{r}
 Sys.setlocale('LC_ALL','C')
-source_rmd("D:/statisic/Master_thesis/MSIBSSD/MSIBSSD_functions.Rmd")
+source_rmd("D:/statisic/Master_thesis/MSIBSSD_DF/MSIBSSD_DF_functions.Rmd")
 ```
 
 ```{r}
@@ -41,12 +41,12 @@ n2 = 6
 qLB = 4
 qGB = 3
 mSSD <- generateMSSD(m1 = m1, m2 = m2, n1 = n1, n2 = n2)
-
+Dcriterion(mSSD = table1, f = 2, m1 = m1, m2 = m2, n1 = n1, n2 = n2)
 
 ```
 
 ```{r}
-table1 <- read.csv("D:/statisic/Master_thesis/MSIBSSD/table1.csv",  header = FALSE)
+table1 <- read.csv("D:/statisic/Master_thesis/MSIBSSD_DF/table1.csv",  header = FALSE)
 table1 <- as.matrix(table1)
 
 ```
@@ -62,7 +62,7 @@ Dcriterion(mSSD = table1, f = 5, m1 = m1, m2 = m2, n1 = n1, n2 = n2)
 ```
 
 ```{r}
-mSIBSSD <- function(particle, m1, m2, n1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
+mSIBSSD <- function(particle,f, m1, m2, n1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
   
   #1: Randomly generate a set of balanced N*m SSDs as initial particles
   mSIBSSD.list <- list()
@@ -159,9 +159,12 @@ mSIBSSD <- function(particle, m1, m2, n1, n2, qLB, qGB, w.ratio, iteration, earl
   return(list(GB,record))  
 }
 ```
+$value
+[1] 10.79186
 
+22057.61 sec elapsed
 ```{r}
-particle = 100
+particle = 500
 m1 = 8
 m2 = 8
 n1 = 6
@@ -170,8 +173,10 @@ f = 2
 qLB = 4
 qGB = 3
 w.ratio = 0.2
-
-test <- mSIBSSD(particle = particle, m1 = m1, m2 = m2, n1 = n1, n2 = n2, qLB = qLB, qGB = qGB, w.ratio = w.ratio, iteration = 100, early.break = 100)
+library(tictoc)
+tic()
+test <- mSIBSSD(particle = particle,f = f, m1 = m1, m2 = m2, n1 = n1, n2 = n2, qLB = qLB, qGB = qGB, w.ratio = w.ratio, iteration = 500, early.break = 100)
+toc()
 ```
 
 ```{r}
