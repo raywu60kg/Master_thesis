@@ -1,0 +1,47 @@
+---
+title: "strip-plot_MSIBSSD_Df"
+output: html_document
+---
+#read functions
+```{r}
+source_rmd <- function(file, local = FALSE, ...){
+  options(knitr.duplicate.label = 'allow')
+
+  tempR <- tempfile(tmpdir = ".", fileext = ".R")
+  on.exit(unlink(tempR))
+  knitr::purl(file, output=tempR, quiet = TRUE)
+
+  envir <- globalenv()
+  source(tempR, local = envir, ...)
+}
+
+Sys.setlocale('LC_ALL','C')
+source_rmd("D:/statisic/Master_thesis/strip-plot_MSIBSSD_Df/strip-plot_MSIBSSD_Df_functions.Rmd")
+```
+```{r}
+generateSPD(m1 = 12, m2 = 10, n1 = 8, n2 = 3)
+```
+
+```{r}
+table5a <- as.matrix(read.csv("D:/statisic/Master_thesis/strip-plot_MSIBSSD_Df/table5a.csv",header = F))
+table5b <- as.matrix(read.csv("D:/statisic/Master_thesis/strip-plot_MSIBSSD_Df/table5b.csv",header = F))
+```
+
+```{r}
+m1 = 12
+m2 = 10
+n1 = 8
+n2 = 3
+f = 2
+tem.U2 <- diag(6)
+index.U2 <- c(1,2,3,1,2,4,1,3,5,1,4,5,2,3,6,2,4,6,3,5,6,4,5,6)
+U2 <- c()
+for(i in 1:length(index.U2)){
+  U2 <- rbind(U2,tem.U2[index.U2[i],])  
+}
+```
+```{r}
+Dcriterion_stripplot(mSSD = table5a, U2 = U2, f = 3,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
+Dcriterion_stripplot(mSSD = table5b, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
+```
+

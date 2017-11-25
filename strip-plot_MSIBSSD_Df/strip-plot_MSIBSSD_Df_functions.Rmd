@@ -1,0 +1,45 @@
+---
+title: "strip-plot_MSIBSSD_Df_functions"
+output: html_document
+---
+
+```{r}
+generateSPD <- function(m1, m2, n1, n2){
+  tem.w <- rep(c(-1, 1), each = n1/2)
+  tem.s <- rep(c(-1, 1), each = (n1*n2)/2)
+  wholeplot <- matrix(0, n1*n2, m1)
+  subplot <- matrix(0, n1*n2, m2)
+  
+  for(i in 1:m1){
+    wholeplot[ ,i] <- rep(sample(tem.w,n1), each = n2)  
+  }
+  
+  for(i in 1:m2){
+    subplot[ ,i] <- sample(tem.s,n1*n2)
+  }
+  return(cbind(wholeplot, subplot))
+}
+
+```
+```{r}
+Dcriterion_stripplot <- function(mSSD,U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2){
+  index.matrix <- combn(ncol(mSSD), f)
+  library(Matrix)   
+  U1 <- kronecker(diag(n1),matrix(1,n2,1))
+  S <- diag(n1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2))
+  
+  Df <- 0
+  for(i in 1:ncol(index.matrix)){
+    Xf <- cbind(1, mSSD[ ,index.matrix[,i]])
+    Df <- Df + det(t(Xf) %*% solve(S) %*% Xf)^(1/(f+1))
+  }
+  return(Df / choose(ncol(mSSD), f))
+}
+```
+
+```{r}
+mSSD <- table5a
+```
+
+
+
