@@ -18,15 +18,14 @@ source_rmd <- function(file, local = FALSE, ...){
 Sys.setlocale('LC_ALL','C')
 source_rmd("D:/statisic/Master_thesis/strip-plot_MSIBSSD_Df/strip-plot_MSIBSSD_Df_functions.Rmd")
 ```
-```{r}
-generateSPD(m1 = 12, m2 = 10, n1 = 8, n2 = 3)
-```
+
 
 ```{r}
 table5a <- as.matrix(read.csv("D:/statisic/Master_thesis/strip-plot_MSIBSSD_Df/table5a.csv",header = F))
 table5b <- as.matrix(read.csv("D:/statisic/Master_thesis/strip-plot_MSIBSSD_Df/table5b.csv",header = F))
 ```
 
+#varibles
 ```{r}
 m1 = 12
 m2 = 10
@@ -39,9 +38,135 @@ U2 <- c()
 for(i in 1:length(index.U2)){
   U2 <- rbind(U2,tem.U2[index.U2[i],])  
 }
+U2
 ```
 ```{r}
-Dcriterion_stripplot(mSSD = table5a, U2 = U2, f = 3,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
+Dcriterion_stripplot(mSSD = table5a, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
 Dcriterion_stripplot(mSSD = table5b, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
+```
+```{r}
+stripplot_MSIBSSD_Df <- function(particle, U2, f, m1, m2, n1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
+  
+  #1: Randomly generate a set of balanced N*m SSDs as initial particles
+  mSIBSSD.list <- list()
+  for(i in 1:particle){
+    mSIBSSD.list[[i]] <- generateSPD(m1 = m1, m2 = m2, n1 = n1, n2 = n2)  
+  }
+  
+  #2: Evaluate objective function value of each SSD
+  Df.value <- numeric(particle)
+  for(j in 1:particle){
+    Df.value[j] <- Dcriterion_stripplot(mSSD = mSIBSSD.list[[j]], U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2)  
+  }
+  
+  #3: Initialize the LB for all SSDs
+  LB <- list()
+  for(i in 1:particle){
+    LB[[i]] <- list(design = mSIBSSD.list[[i]], value = Df.value[i])   
+  }
+  
+  #4: Initialize the GB
+  GB <- LB[[1]]
+  for(i in 1:particle){
+    if(LB[[i]]$value > GB$value)
+    GB <- LB[[i]]   
+  }
+  
+  #record the GB value
+  record <- GB$value
+  
+  #5: while not converge do
+  progress <- 0                            #index for print when make progress and early break
+  break.index <- 1
+  for(i in 1:iteration){
+    
+    #deal with early break and print when make progress
+    if((i - break.index) >= early.break){
+      break  
+    }else if(progress == 1){
+      print(GB)
+      progress <- 0
+      break.index <- i
+    }
+
+    
+    
+    #6: For each SSD, perform the MIX operation 
+    mixw <- mixOperation(particle = particle, mSIBSSD.list = mSIBSSD.list, w.ratio = w.ratio, LB = LB,GB = GB, qLB = qLB, qGB = qGB, U2)
+    
+
+
+    #7: For each SSD, perform the MOVE operation
+    mSIBSSD.list <- moveOperation(particle = particle,
+                                  mSIBSSD.list = mSIBSSD.list,
+                                  w.ratio = w.ratio,
+                                  mixwLB = mixw$mixwLB, 
+                                  mixwGB = mixw$mixwGB, 
+                                  qLB = qLB, 
+                                  qGB = qGB,
+                                  U2 = U2)
+    
+    #9: Update the LB for all SSDs
+    Df.value <- numeric(particle)
+    for(j in 1:particle){
+      Df.value[j] <- Dcriterion_stripplot(mSSD = mSIBSSD.list[[j]], U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2)  
+    }
+
+    for(j in 1:particle){
+      if(Df.value[j] > LB[[j]]$value){
+        LB[[j]] <- list(design = mSIBSSD.list[[j]], value = Df.value[j])  
+      }
+    }
+    
+    #10: Update the GB
+    if(max(Df.value) > GB$value){
+      GB <- LB[[which.max(Df.value)]] 
+      progress <- 1
+    }
+  
+  record <- c(record,GB$value)
+
+  #11: end while
+  }
+  return(list(GB,record))  
+}
+```
+
+```{r}
+particle = 5
+m1 = 12
+m2 = 10
+n1 = 8
+n2 = 3
+f = 2
+
+#U2
+tem.U2 <- diag(6)
+index.U2 <- c(1,2,3,1,2,4,1,3,5,1,4,5,2,3,6,2,4,6,3,5,6,4,5,6)
+U2 <- c()
+for(i in 1:length(index.U2)){
+  U2 <- rbind(U2,tem.U2[index.U2[i],])  
+}
+
+f = 2
+qLB = 4
+qGB = 3
+w.ratio = 0.2
+library(tictoc)
+tic()
+test <- stripplot_MSIBSSD_Df(particle = particle, U2 = U2, f = f, m1 = m1, m2 = m2, n1 = n1, n2 = n2, qLB = qLB, qGB = qGB, w.ratio = w.ratio, iteration = 5, early.break = 100)
+toc()
+```
+```{r}
+test[[1]]
+
+Dcriterion_stripplot(mSSD = test[[1]], U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2) 
+combn(ncol(test[[1]]), f)
+typeof(test[[1]])
+```
+```{r}
+tem = generateSPD(index.U2 = index.U2, m1 = m1, m2 = m2, n1 = n1,n2 = n2)
+Dcriterion_stripplot(mSSD = table5a, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2) 
+Dcriterion_stripplot(mSSD = tem, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2) 
 ```
 

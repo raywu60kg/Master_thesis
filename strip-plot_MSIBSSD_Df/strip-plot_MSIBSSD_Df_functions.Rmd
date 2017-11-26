@@ -4,10 +4,11 @@ output: html_document
 ---
 
 ```{r}
-generateSPD <- function(m1, m2, n1, n2){
+generateSPD <- function(index.U2, m1, m2, n1, n2){
   tem.w <- rep(c(-1, 1), each = n1/2)
-  tem.s <- rep(c(-1, 1), each = (n1*n2)/2)
+  tem.s <- rep(c(-1, 1), each = 6/2)
   wholeplot <- matrix(0, n1*n2, m1)
+  tem.subplot <- matrix(0, 6, m2)
   subplot <- matrix(0, n1*n2, m2)
   
   for(i in 1:m1){
@@ -15,18 +16,22 @@ generateSPD <- function(m1, m2, n1, n2){
   }
   
   for(i in 1:m2){
-    subplot[ ,i] <- sample(tem.s,n1*n2)
+    tem.subplot[ ,i] <- sample(tem.s,6)
+  }
+  for(i in 1:length(index.U2)){
+    subplot[i, ] <- tem.subplot[index.U2[i], ]
   }
   return(cbind(wholeplot, subplot))
 }
 
 ```
+
 ```{r}
 Dcriterion_stripplot <- function(mSSD,U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2){
   index.matrix <- combn(ncol(mSSD), f)
   library(Matrix)   
   U1 <- kronecker(diag(n1),matrix(1,n2,1))
-  S <- diag(n1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2))
+  S <- diag(n1 * n2) + (2 * U1 %*% t(U1)) + (2 * U2 %*% t(U2)) # 2 is from paper
   
   Df <- 0
   for(i in 1:ncol(index.matrix)){
@@ -38,8 +43,209 @@ Dcriterion_stripplot <- function(mSSD,U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n
 ```
 
 ```{r}
-mSSD <- table5a
+Dcriterion_add_delete <- function(mSSD, column, U2, f , m1 , m2, n1, n2){
+  index.matrix <- combn(ncol(mSSD), f-1)
+  Df <- 0  
+  library(Matrix)   
+  U1 <- kronecker(diag(n1),matrix(1,n2,1))
+  S <- diag(n1 * n2) + (2 * U1 %*% t(U1)) + (2 * U2 %*% t(U2))
+  for(i in 1:ncol(index.matrix)){
+    Xf <- cbind(1, mSSD[ ,index.matrix[,i]])
+    Xf <- cbind(Xf,column)
+    Df <- Df + det(t(Xf) %*% solve(S) %*% Xf)^(1/(f+1))
+  }
+  return(Df)
+}
 ```
 
+```{r}
+mixOperation <- function(particle, mSIBSSD.list, w.ratio = 0.2, LB, GB, qLB, qGB, U2){
+  mixwLB <- list()
+  mixwGB <- list()
+  for(i in 1:particle){
+    worksheet <- mSIBSSD.list[[i]]
+    
+    ###mixwLB###
+    #column deletion step 
+    tem <- worksheet
+    tem.m1 <- m1
+    tem.m2 <- m2
+
+    
+    #radom
+    w.qLB <- rbinom(n = 1, size = qLB, prob = w.ratio)
+    s.qLB <- qLB - w.qLB
+    
+    #wholeplot
+    if(w.qLB != 0){
+      for(j in 1:w.qLB){
+        lack.value <- numeric(tem.m1)
+        for(k in 1:tem.m1){
+          lack.value[k] <- Dcriterion_add_delete(mSSD = tem[ ,-k], column = tem[,k],U2 = U2, f = f, m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)  
+        }  
+        tem <- tem[,-which.min(lack.value)] 
+        tem.m1 <- tem.m1 - 1 
+        #lack.m1 <- lack.m1 + 1
+      }
+    }
+    
+    #subplot
+    if(s.qLB != 0){
+      for(j in 1:s.qLB){
+        lack.value <- numeric(tem.m2)
+        for(k in 1:tem.m2){
+          lack.value[k] <- Dcriterion_add_delete(mSSD = tem[ ,-(tem.m1 + k)],column = tem[,tem.m1 + k],U2 = U2, f = f, m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)  
+        }  
+        tem <- tem[,-(tem.m1 + which.min(lack.value))] 
+        tem.m2 <- tem.m2 - 1 
+        #lack.m2 <- lack.m2 + 1
+      }
+    }
+    
+
+    
+    #column addition step
+    #wholeplot
+    add.matrix <- LB[[i]]$design
+    if(w.qLB != 0){
+      for(j in 1:w.qLB){
+        add.value <- numeric(m1)   
+        for(k in 1:m1){
+          
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,k], U2 = U2, f = f,m1 = tem.m1 , m2 = tem.m2, n1 = n1,n2 = n2)
+        }
+        tem <- cbind(add.matrix[,which.max(add.value)], tem)
+        tem.m1 <- tem.m1 + 1
+      }
+    }
+    #subplot
+    if(s.qLB != 0){
+      for(j in 1:s.qLB){
+        add.value <- numeric(m2)   
+        for(k in 1:m2){
+          
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,m1 + k], U2 = U2, f = f,m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)
+        }
+        tem <- cbind(tem,add.matrix[,tem.m1 + which.max(add.value)])
+        tem.m2 <- tem.m2 + 1
+      }
+    }
+    
+    ###
+    mixwLB[[i]] <- list(design = tem,value = Dcriterion_stripplot(mSSD = tem, U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2))  #important value
+    ###
+    
+    ###mixwGB###
+    #column deletion step 
+    tem <- worksheet
+    tem.m1 <- m1
+    tem.m2 <- m2
+
+    
+    #radom
+    w.qGB <- rbinom(n = 1, size = qGB, prob = w.ratio)
+    s.qGB <- qGB - w.qGB
+    
+    #wholeplot
+    if(w.qGB != 0){
+      for(j in 1:w.qGB){
+        lack.value <- numeric(tem.m1)
+        for(k in 1:tem.m1){
+          lack.value[k] <- Dcriterion_add_delete(mSSD = tem[ ,-k], column = tem[,k], U2 = U2, f = f, m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)  
+        }  
+        tem <- tem[,-which.min(lack.value)] 
+        tem.m1 <- tem.m1 - 1 
+        #lack.m1 <- lack.m1 + 1
+      }
+    }
+    
+    #subplot
+    if(s.qGB != 0){
+      for(j in 1:s.qGB){
+        lack.value <- numeric(tem.m2)
+        for(k in 1:tem.m2){
+          lack.value[k] <- Dcriterion_add_delete(mSSD = tem[ ,-(tem.m1 + k)],column = tem[,tem.m1 + k], U2 = U2, f = f, m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)  
+        }  
+        tem <- tem[,-(tem.m1 + which.min(lack.value))] 
+        tem.m2 <- tem.m2 - 1 
+        #lack.m2 <- lack.m2 + 1
+      }
+    }
+    
+
+    
+    #column addition step
+    #wholeplot
+    add.matrix <- GB$design
+    if(w.qGB != 0){
+      for(j in 1:w.qGB){
+        add.value <- numeric(m1)   
+        for(k in 1:m1){
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,k], U2 = U2, f = f,m1 = tem.m1 , m2 = tem.m2, n1 = n1,n2 = n2) 
+        }
+        tem <- cbind(add.matrix[,which.max(add.value)], tem)
+        tem.m1 <- tem.m1 + 1
+      }
+    }
+    #subplot
+    if(s.qGB != 0){
+      for(j in 1:s.qGB){
+        add.value <- numeric(m2)   
+        for(k in 1:m2){
+          
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,m1 + k], U2 = U2, f = f,m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)
+        }
+        tem <- cbind(tem,add.matrix[,tem.m1 + which.max(add.value)])
+        tem.m2 <- tem.m2 + 1
+      }
+    }
+    
+    ###
+    mixwGB[[i]] <- list(design = tem,value = Dcriterion_stripplot(mSSD = tem, U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2))  #important value    
+    ###
+  
+    
+    
+    #column addition step
+  }
+  return(list(mixwLB = mixwLB, mixwGB = mixwGB))
+  
+}
+```
+
+```{r}
+moveOperation <- function(particle, mSIBSSD.list, w.ratio, mixwLB, mixwGB, qLB, qGB, U2){
+  for(i in 1:particle){
+    
+    if(mixwGB[[i]]$value > mixwLB[[i]]$value && mixwGB[[i]]$value > Dcriterion_stripplot(mSSD = mSIBSSD.list[[i]], U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2)){
+      mSIBSSD.list[[i]] <- mixwGB[[i]]$design 
+      
+    }else if(mixwLB[[i]]$value > mixwGB[[i]]$value && mixwLB[[i]]$value > Dcriterion_stripplot(mSSD = mSIBSSD.list[[i]], U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2)){
+      mSIBSSD.list[[i]] <- mixwLB[[i]]$design  
+      
+    }else{
+      #radom
+      w.qLB <- rbinom(n = 1, size = qLB, prob = w.ratio)
+      s.qLB <- qLB - w.qLB
+      w.replace.index <- sample(m1,w.qLB)
+      s.replace.index <- sample(m2,s.qLB)
+      replace.matrix <- generateSPD(m1 = m1, m2 = m2, n1 = n1, n2 = n2) #
+      
+      #wholeplot
+      if(w.qLB != 0){
+        
+        mSIBSSD.list[[i]][,w.replace.index] <- replace.matrix[,w.replace.index]  
+      }
+       
+      #subplot
+      if(s.qLB != 0){
+        mSIBSSD.list[[i]][,m1+s.replace.index] <- replace.matrix[,m1+s.replace.index]  
+      }
+      
+    }
+  }
+  return(mSIBSSD.list)
+}
+```
 
 
