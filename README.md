@@ -1,7 +1,7 @@
 # Master_thesis
 algorithm for finding optimal design
 
-From OPTIMIZING TWO-LEVEL SUPERSATURATED DESIGNS USING SWARM INTELLIGENCE TECHNIQUES(2016)
+From OPTIMIZING TWO-LEVEL SUPERSATURATED DESIGNS USING SWARM INTELLIGENCE TECHNIQUES(2016) /n
 and we upated it to deal with the multistratum designs.
 
 1: Randomly generate a set of balanced (n1*n2)*(m1+m2) multistratum SSDs as initial particles
