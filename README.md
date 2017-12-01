@@ -3,7 +3,7 @@ It is an algorithm for finding optimal design from OPTIMIZING TWO-LEVEL SUPERSAT
 and we upated it to deal with the multistratum designs.
 
 ## Algorithm
-1.  Randomly generate a set of balanced (n1*n2)*(m1+m2) multistratum SSDs as initial particles  
+1.  Randomly generate a set of balanced (n1 *n2)*(m1+m2) multistratum SSDs as initial particles  
 2.  Evaluate objective function value of each SSD  
 3.  Initialize the LB for all SSDs 
 4.  Initialize the GB 
@@ -28,9 +28,9 @@ we do the following step:
   however the sum of wholeplot and subplot equal to "q". 
 * Delete the SSD "q" columns form whole plot and sup plot such that the remain design has the largest objective function value.    
 * Add "q" columns from LB or GB to make the objective function value become largest from all the columns adding combination. 
-  If we add columns form GB, "q" equal to qGB and a new design called mixwGB and If we add columns form LB, "q" equal to qLB and a new design called mixLGB.<br /> 
+  If we add columns form GB, "q" equal to qGB and a new design called mixwGB and If we add columns form LB, "q" equal to qLB and a new design called mixwGB.<br /> 
   
-when all particles finish these step, we complete the MIX operation process. 
+When all particles finish these step, we complete the MIX operation process. 
 
 ### MOVE operation:  
   If the objective function value of mixwGB is the largest form mixwLB and current SSD, we replace the current SSD by mixwGB. 
