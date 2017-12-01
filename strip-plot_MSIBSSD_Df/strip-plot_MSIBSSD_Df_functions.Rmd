@@ -214,7 +214,7 @@ mixOperation <- function(particle, mSIBSSD.list, w.ratio = 0.2, LB, GB, qLB, qGB
 ```
 
 ```{r}
-moveOperation <- function(particle, mSIBSSD.list, w.ratio, mixwLB, mixwGB, qLB, qGB, U2){
+moveOperation <- function(particle, mSIBSSD.list, w.ratio, mixwLB, mixwGB, qLB, qGB, U2,index.U2){
   for(i in 1:particle){
     
     if(mixwGB[[i]]$value > mixwLB[[i]]$value && mixwGB[[i]]$value > Dcriterion_stripplot(mSSD = mSIBSSD.list[[i]], U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2)){
@@ -229,7 +229,7 @@ moveOperation <- function(particle, mSIBSSD.list, w.ratio, mixwLB, mixwGB, qLB, 
       s.qLB <- qLB - w.qLB
       w.replace.index <- sample(m1,w.qLB)
       s.replace.index <- sample(m2,s.qLB)
-      replace.matrix <- generateSPD(m1 = m1, m2 = m2, n1 = n1, n2 = n2) #
+      replace.matrix <- generateSPD(index.U2 = index.U2, m1 = m1, m2 = m2, n1 = n1, n2 = n2) #
       
       #wholeplot
       if(w.qLB != 0){

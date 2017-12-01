@@ -38,19 +38,19 @@ U2 <- c()
 for(i in 1:length(index.U2)){
   U2 <- rbind(U2,tem.U2[index.U2[i],])  
 }
-U2
+#U2
 ```
 ```{r}
 Dcriterion_stripplot(mSSD = table5a, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
 Dcriterion_stripplot(mSSD = table5b, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
 ```
 ```{r}
-stripplot_MSIBSSD_Df <- function(particle, U2, f, m1, m2, n1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
+stripplot_MSIBSSD_Df <- function(particle, U2, index.U2, f, m1, m2, n1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
   
   #1: Randomly generate a set of balanced N*m SSDs as initial particles
   mSIBSSD.list <- list()
   for(i in 1:particle){
-    mSIBSSD.list[[i]] <- generateSPD(m1 = m1, m2 = m2, n1 = n1, n2 = n2)  
+    mSIBSSD.list[[i]] <- generateSPD(index.U2 = index.U2, m1 = m1, m2 = m2, n1 = n1, n2 = n2)  
   }
   
   #2: Evaluate objective function value of each SSD
@@ -104,7 +104,8 @@ stripplot_MSIBSSD_Df <- function(particle, U2, f, m1, m2, n1, n2, qLB, qGB, w.ra
                                   mixwGB = mixw$mixwGB, 
                                   qLB = qLB, 
                                   qGB = qGB,
-                                  U2 = U2)
+                                  U2 = U2,
+                                  index.U2 = index.U2)
     
     #9: Update the LB for all SSDs
     Df.value <- numeric(particle)
@@ -133,7 +134,7 @@ stripplot_MSIBSSD_Df <- function(particle, U2, f, m1, m2, n1, n2, qLB, qGB, w.ra
 ```
 
 ```{r}
-particle = 5
+particle = 500
 m1 = 12
 m2 = 10
 n1 = 8
@@ -149,24 +150,22 @@ for(i in 1:length(index.U2)){
 }
 
 f = 2
-qLB = 4
-qGB = 3
+qLB = round((m1+m2)/3)
+qGB = round((m1+m2)/6)
 w.ratio = 0.2
+
+
 library(tictoc)
 tic()
-test <- stripplot_MSIBSSD_Df(particle = particle, U2 = U2, f = f, m1 = m1, m2 = m2, n1 = n1, n2 = n2, qLB = qLB, qGB = qGB, w.ratio = w.ratio, iteration = 5, early.break = 100)
+test <- stripplot_MSIBSSD_Df(particle = particle, U2 = U2,index.U2 = index.U2, f = f, m1 = m1, m2 = m2, n1 = n1, n2 = n2, qLB = qLB, qGB = qGB, w.ratio = w.ratio, iteration = 500, early.break = 100)
 toc()
 ```
-```{r}
-test[[1]]
 
-Dcriterion_stripplot(mSSD = test[[1]], U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2) 
-combn(ncol(test[[1]]), f)
-typeof(test[[1]])
-```
 ```{r}
+test[[1]]$design
 tem = generateSPD(index.U2 = index.U2, m1 = m1, m2 = m2, n1 = n1,n2 = n2)
 Dcriterion_stripplot(mSSD = table5a, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2) 
-Dcriterion_stripplot(mSSD = tem, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2) 
+Dcriterion_stripplot(mSSD = test[[1]]$design, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2) 
+test[[2]]
 ```
 
