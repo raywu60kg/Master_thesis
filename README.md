@@ -3,7 +3,7 @@ It is an algorithm for finding optimal design from OPTIMIZING TWO-LEVEL SUPERSAT
 and we upated it to deal with the multistratum designs.
 
 ## Algorithm
-1.  Randomly generate a set of balanced (n1 *n2)*(m1+m2) multistratum SSDs as initial particles  
+1.  Randomly generate a set of balanced (n1 x n2)(m1+m2) multistratum SSDs as initial particles  
 2.  Evaluate objective function value of each SSD  
 3.  Initialize the LB for all SSDs 
 4.  Initialize the GB 
