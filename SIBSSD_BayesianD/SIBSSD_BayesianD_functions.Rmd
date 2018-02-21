@@ -1,0 +1,176 @@
+---
+title: "SIBSSD_BayesianD_functions"
+output: html_document
+---
+```{r}
+find_alpha_R <- function(m){
+  random.row <- sample.int(2^m,10000)
+  #n <- 10000
+  index <- c(1,-1)
+  inf.matrix <- c()
+  # rep(rep(c(1,-1),each = n/2),1)
+  # rep(rep(c(1,-1),each = n/4),2)
+  #for(i in 1:n){
+  for(i in random.row){
+    tem.matrix <- numeric(m)+1
+    tem <- i
+    for(j in 1:m){
+      if(tem == 0){
+        break
+      }else{
+        tem <- tem/2
+        quotient <- floor(tem)
+        remainder <- tem - quotient 
+        tem.matrix[m-j+1] <- index[(remainder != 0)+1]
+        tem <- quotient 
+      }
+      
+    }
+    
+    inf.matrix <- rbind(inf.matrix, tem.matrix)
+  }
+  
+  xpri <- matrix(1,nrow = nrow(inf.matrix),1)
+  xpot <- inf.matrix
+  #xpri <- cbind(1,xpri)
+  #solve(t(xpri) %*% xpri) %*% t(xpri) %*% xpot
+  alpha <- as.matrix(lm(xpot~xpri-1)$coefficients)
+  #xpri <- cbind(1,xpri)
+  R <- xpot-xpri%*%alpha
+  R.range <- apply(R,2,max) - apply(R,2,min)
+  print(alpha)
+  #print(R)
+ 
+  
+  return(list(alpha = alpha, R.range = R.range))      
+}
+```
+
+```{r}
+evaluateBayesianD <- function(SSD){
+  tau <- sqrt(5)
+  m <- ncol(SSD)
+  
+  #primary
+  primary <- matrix(1,nrow = nrow(SSD),1)
+  p1 <- ncol(primary)
+  
+  #potential
+  potential <- SSD
+  p2 <- ncol(potential)
+  potential.adj <- potential / 2   
+  
+  
+  
+  x <- as.matrix(cbind(primary,potential.adj))  
+  K <- diag(c(rep(0,p1),rep(1,p2)))
+  if(qr(primary)$rank==p1){
+        bd<-det(t(x)%*%x+K/tau^2)	^(1/(p1+p2))
+       #bd<-1/tr(solve(t(x)%*%solve(S)%*%x+K/tau^2))		        
+	}else{
+		bd<-0
+	}	
+  #bd <- det(t(x)%*%x + K/tau^2)^(1/(p1+p2))
+  return(bd)
+}
+```
+
+```{r}
+generateSSD <- function(N,m){
+  SSD <- matrix(NA,N,m)
+  tem <- c(rep(-1,N/2),rep(1,N/2))
+  for(i in 1:m){
+    SSD[,i] <- sample(tem,N)
+  }
+  return(SSD)
+}
+```
+
+
+
+```{r}
+mixOperation <- function(particle, SIBSSD.list, LB, GB, qLB, qGB){
+  mixwLB <- list()
+  mixwGB <- list()
+  for(i in 1:particle){
+    worksheet <- SIBSSD.list[[i]]
+    
+    ###mixwLB###
+    #column deletion step 
+    tem <- worksheet
+    for(j in 1:qLB){
+      lack.value <- numeric(ncol(tem))
+      for(k in 1:ncol(tem)){
+        lack.value[k] <- evaluateBayesianD(tem[,-k])
+      }
+      tem <- tem[,-which.max(lack.value)]
+    }
+    
+    
+    #column addition step
+    add.matrix <- LB[[i]]$design
+    for(j in 1:qLB){
+      add.value <- numeric(ncol(add.matrix))   #?
+      for(k in 1:ncol(add.matrix)){
+        add.value[k] <- evaluateBayesianD(cbind(tem,add.matrix[,k]))
+      }
+      tem <- cbind(tem,add.matrix[,which.max(add.value)])
+    }
+    
+    mixwLB[[i]] <- list(design = tem,value = evaluateBayesianD(tem))  #important value
+    
+    ###mixwGB###
+    #column deletion step 
+    tem <- worksheet
+    for(j in 1:qGB){
+      lack.value <- numeric(ncol(tem))
+      for(k in 1:ncol(tem)){
+        lack.value[k] <- evaluateBayesianD(tem[,-k])
+      }
+      tem <- tem[,-which.max(lack.value)]
+    }
+    
+    #column addition step
+    add.matrix <- GB$design
+    for(j in 1:qGB){
+      add.value <- numeric(ncol(tem))
+      for(k in 1:ncol(add.matrix)){
+        add.value[k] <- evaluateBayesianD(cbind(tem,add.matrix[,k]))
+      }
+      tem <- cbind(tem,add.matrix[,which.max(add.value)])
+      
+    }
+    
+    mixwGB[[i]] <- list(design = tem,value = evaluateBayesianD(tem))  #important value
+    
+    
+    #column addition step
+  }
+  return(list(mixwLB = mixwLB, mixwGB = mixwGB))
+  
+}
+```
+
+```{r}
+moveOperation <- function(particle, SIBSSD.list, mixwLB, mixwGB, qLB, qGB){
+  for(i in 1:particle){
+    
+    #move to mixwGB
+    if(mixwGB[[i]]$value > mixwLB[[i]]$value && mixwGB[[i]]$value > evaluateBayesianD(SIBSSD.list[[i]])){
+      SIBSSD.list[[i]] <- mixwGB[[i]]$design 
+    
+    #move to mixwGLB  
+    }else if(mixwLB[[i]]$value > mixwGB[[i]]$value && mixwLB[[i]]$value > evaluateBayesianD(SIBSSD.list[[i]])){
+      SIBSSD.list[[i]] <- mixwLB[[i]]$design  
+    
+    #move to mixwRC  
+    }else{
+      replace.index <- sample(m,qLB)
+      replace.col <- generateSSD(N = N,m = qLB)
+      
+      SIBSSD.list[[i]][,replace.index] <- replace.col 
+    }
+  }
+  return(SIBSSD.list)
+}
+```

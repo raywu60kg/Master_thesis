@@ -1,0 +1,383 @@
+---
+title: "Find_alpha"
+output: html_document
+---
+# examples
+
+```{r}
+x<-c(-1,-.5,0,.5,1)
+xpri<-cbind(1,x)
+xpot<-x^2
+alpha<-as.matrix(lm(xpot~x)$coefficients)
+R<-xpot-xpri%*%alpha
+max(R)-min(R)
+z1<-R/(max(R)-min(R))
+z1
+alpha
+```
+#Two factor
+```{r}
+x <- matrix(c(1,1,-1,-1,1,-1,1,-1),4,2)
+m <- ncol(x)
+xpri<-cbind(1,x)
+index.matrix <- combn(m,2)
+p2 <- ncol(index.matrix)
+xpot <- matrix(0,nrow(x),choose(m,2))
+for(i in 1:p2){
+  xpot[,i] <- x[,index.matrix[1,i]] * x[,index.matrix[2,i]]
+}
+alpha<-as.matrix(lm(xpot~x)$coefficients)
+R<-xpot-xpri%*%alpha
+x
+max(R)-min(R)
+z1<-R/(max(R)-min(R))
+z1
+alpha
+```
+#Three factor
+```{r}
+x <- matrix(0,2^3,3)
+l <- 1
+for(i in c(1,-1)){
+  for(j in c(1,-1)){
+    for(k in c(1,-1)){
+      x[l,] <- c(i,j,k)
+      l <- l + 1 
+    }
+  }
+}
+x
+m <- ncol(x)
+xpri<-cbind(1,x)
+index.matrix <- combn(m,2)
+p2 <- ncol(index.matrix)
+xpot <- matrix(0,nrow(x),choose(m,2))
+for(i in 1:p2){
+  xpot[,i] <- x[,index.matrix[1,i]] * x[,index.matrix[2,i]]
+}
+alpha<-as.matrix(lm(xpot~x)$coefficients)
+R<-xpot-xpri%*%alpha
+max(R)-min(R)
+z1<-R/(max(R)-min(R))
+z1
+alpha
+```
+
+#four factor
+```{r}
+x <- matrix(0,2^4,4)
+l <- 1
+for(i in c(1,-1)){
+  for(j in c(1,-1)){
+    for(k in c(1,-1)){
+      for(m in c(1,-1)){
+         x[l,] <- c(i,j,k,m)
+         l <- l + 1   
+      }
+     
+    }
+  }
+}
+x
+m <- ncol(x)
+xpri<-cbind(1,x)
+index.matrix <- combn(m,2)
+p2 <- ncol(index.matrix)
+xpot <- matrix(0,nrow(x),choose(m,2))
+for(i in 1:p2){
+  xpot[,i] <- x[,index.matrix[1,i]] * x[,index.matrix[2,i]]
+}
+alpha<-as.matrix(lm(xpot~x)$coefficients)
+R<-xpot-xpri%*%alpha
+max(R)-min(R)
+z1<-R/(max(R)-min(R))
+z1
+alpha
+```
+
+# all terms except the intercept are potential terms(24,30)
+```{r}
+xpri <- rep(1,24)
+xpot <- A
+alpha<-as.matrix(lm(xpot~xpri-1)$coefficients)
+R<-xpot-xpri%*%alpha
+max(R)-min(R)
+z1<-R/(max(R)-min(R))
+z1
+alpha
+```
+# we assume that the first p1−1
+factors are known to be active and the remaining p2 factors are to be screened(12,16)
+```{r}
+n <- 2^15
+m <- 15
+xpri <- matrix(0,n,m)
+# rep(rep(c(1,-1),each = n/2),1)
+# rep(rep(c(1,-1),each = n/4),2)
+for(i in 1:m){
+  xpri[,i] <- rep(rep(c(1,-1),each = n/(2^i)),2^(i-1))
+}
+xpot <- xpri
+xpri <- cbind(1,xpri)
+alpha<-as.matrix(lm(xpot~xpri-1)$coefficients)
+R<-xpot-xpri%*%alpha
+apply(R,2,max) - apply(R,2,min)
+R/(max(R)-min(R))
+```
+
+########################################
+```{r}
+SSD <- as.matrix(read.csv("D:/statisic/Master_thesis/SIBSSD_BayesianD/24x30A.csv",header = F))
+```
+
+# all terms except the intercept are potential terms
+```{r}
+find_alpha_R <- function(m){
+  random.row <- sample.int(2^m,10000) #choose 10000 times to approximate true value
+
+  index <- c(1,-1)
+  inf.matrix <- c()
+  # rep(rep(c(1,-1),each = n/2),1)
+  # rep(rep(c(1,-1),each = n/4),2)
+  #for(i in 1:n){
+  for(i in random.row){
+    tem.matrix <- numeric(m)+1
+    tem <- i
+    for(j in 1:m){
+      if(tem == 0){
+        break
+      }else{
+        tem <- tem/2
+        quotient <- floor(tem)
+        remainder <- tem - quotient 
+        tem.matrix[m-j+1] <- index[(remainder != 0)+1]
+        tem <- quotient 
+      }
+      
+    }
+    
+    inf.matrix <- rbind(inf.matrix, tem.matrix)
+  }
+  
+  xpri <- matrix(1,nrow = nrow(inf.matrix),1)
+  xpot <- inf.matrix
+  #xpri <- cbind(1,xpri)
+  #solve(t(xpri) %*% xpri) %*% t(xpri) %*% xpot
+  alpha <- as.matrix(lm(xpot~xpri-1)$coefficients)
+  #xpri <- cbind(1,xpri)
+  R <- xpot-xpri%*%alpha
+  R.range <- apply(R,2,max) - apply(R,2,min)
+  #print(alpha)
+  #print(R)
+ 
+  
+  return(list(alpha = alpha, R.range = R.range))      
+}
+```
+```{r}
+for(i in 1:5){
+  alpha_R <- find_alpha_R(30)
+  print(alpha_R)
+}
+```
+```{r}
+SSD
+primary <- matrix(1, nrow = nrow(SSD))
+potential <- SSD
+alpha <- alpha_R$alpha
+R.range <- alpha_R$R.range
+
+
+
+xpot<-potential
+R<-xpot-primary%*%matrix(alpha,1) 
+potential.adj <- c()
+for(i in 1:length(R.range)){
+  z<-R[,i]/R.range[i]
+  potential.adj<-cbind(potential.adj,z)  
+}
+potential.adj
+```
+
+# Evaluate Bayesiand value
+```{r}
+evaluateBayesianD <- function(SSD){
+  tau <- sqrt(5)
+  m <- ncol(SSD)
+  
+  #primary
+  primary <- matrix(1,nrow = nrow(SSD),1)
+  p1 <- ncol(primary)
+  
+  #potential
+  potential <- SSD
+  p2 <- ncol(potential)
+  potential.adj <- potential / 2   #we can see the reson above
+  
+  
+  
+  x <- as.matrix(cbind(primary,potential.adj))  
+  K <- diag(c(rep(0,p1),rep(1,p2)))
+  if(qr(primary)$rank==p1){
+        bd<-det(t(x)%*%x+K/tau^2)	^(1/(p1+p2))
+       #bd<-1/tr(solve(t(x)%*%solve(S)%*%x+K/tau^2))		        
+	}else{
+		bd<-0
+	}	
+  #bd <- det(t(x)%*%x + K/tau^2)^(1/(p1+p2))
+  return(bd)
+}
+evaluateBayesianD(SSD)
+```
+
+
+# we assume that the first p1−1 factors are known to be active and the remaining p2 factors are to be screened
+```{r}
+
+random.row <- sample.int(2^30,10000)
+#n <- 10000
+index <- c(1,-1)
+inf.matrix <- c()
+# rep(rep(c(1,-1),each = n/2),1)
+# rep(rep(c(1,-1),each = n/4),2)
+#for(i in 1:n){
+for(i in random.row){
+  tem.matrix <- numeric(m)+1
+  tem <- i
+  for(j in 1:m){
+    if(tem == 0){
+      break
+    }else{
+      tem <- tem/2
+      quotient <- floor(tem)
+      remainder <- tem - quotient 
+      tem.matrix[m-j+1] <- index[(remainder != 0)+1]
+      tem <- quotient 
+    }
+    
+  }
+  
+  inf.matrix <- rbind(inf.matrix, tem.matrix)
+}
+for(j in 1:23){
+  xpri <- inf.matrix[,1:j]
+  xpot <- inf.matrix[,(j+1):m]
+  xpri <- cbind(1,xpri)
+  #solve(t(xpri) %*% xpri) %*% t(xpri) %*% xpot
+  alpha <- as.matrix(lm(xpot~xpri-1)$coefficients)
+  #xpri <- cbind(1,xpri)
+  R <- xpot-xpri%*%alpha
+  R.range <- apply(R,2,max) - apply(R,2,min)
+ #print(alpha) 
+  
+  tau <- sqrt(5)
+  m <- ncol(SSD)
+  
+  #primary
+  primary <- cbind(1,SSD[,1:j])
+  #primary <- matrix(1,nrow = nrow(SSD),1)
+  p1 <- ncol(primary)
+  
+  #potential
+  potential <- SSD[,(j+1):m]
+  #potential <- SSD
+  p2 <- ncol(potential)
+  potential.adj <- c()
+  for(i in 1:ncol(potential)){
+		xpot<-potential[,i]
+		R<-xpot-primary%*%as.matrix(alpha[,i]) 
+		z<-R/R.range[i]
+		potential.adj<-cbind(potential.adj,z)
+  }
+  
+  #
+  x <- as.matrix(cbind(primary,potential.adj))  
+  K <- diag(c(rep(0,p1),rep(1,p2)))
+  for(k in 1:31){
+  	if(qr(primary)$rank==p1){
+          bd<-det(t(x)%*%x+K/tau^2)	^(1/(k))
+  #	        bd<-1/tr(solve(t(x)%*%solve(S)%*%x+K/tau^2))		        
+  	}else{
+  		bd<-0
+  	}	
+    #bd <- det(t(x)%*%x + K/tau^2)^(1/(p1+p2))
+    print(paste("first",j,",",k,"power",bd))
+  }
+}
+
+ 
+  
+
+```
+
+# 
+```{r}
+random.row <- sample.int(2^30,10000)
+#n <- 10000
+index <- c(1,-1)
+inf.matrix <- c()
+# rep(rep(c(1,-1),each = n/2),1)
+# rep(rep(c(1,-1),each = n/4),2)
+#for(i in 1:n){
+for(i in random.row){
+  tem.matrix <- numeric(m)+1
+  tem <- i
+  for(j in 1:m){
+    if(tem == 0){
+      break
+    }else{
+      tem <- tem/2
+      quotient <- floor(tem)
+      remainder <- tem - quotient 
+      tem.matrix[m-j+1] <- index[(remainder != 0)+1]
+      tem <- quotient 
+    }
+    
+  }
+  
+  inf.matrix <- rbind(inf.matrix, tem.matrix)
+}
+xpri <- cbind(1,inf.matrix)
+xpot <- c()
+combn.matrix <- combn(ncol(inf.matrix),2)
+for(i in 1:ncol(combn.matrix)){
+  xpot <- cbind(xpot, inf.matrix[,combn.matrix[1,i]] * inf.matrix[,combn.matrix[2,i]])
+}
+
+alpha <- as.matrix(lm(xpot~xpri-1)$coefficients)
+#xpri <- cbind(1,xpri)
+R <- xpot-xpri%*%alpha
+R.range <- apply(R,2,max) - apply(R,2,min)
+
+#primary
+primary <- cbind(1,SSD)
+p1 <- ncol(primary)
+
+#potential
+potential <- c()
+combn.matrix <- combn(ncol(SSD),2)
+for(i in 1:ncol(combn.matrix)){
+  potential <- cbind(potential, SSD[,combn.matrix[1,i]] * SSD[,combn.matrix[2,i]])
+}
+p2 <- ncol(potential)
+
+potential.adj <- c()
+for(i in 1:ncol(potential)){
+	xpot<-potential[,i]
+	R<-xpot-primary%*%matrix(alpha[,i],ncol = 1) 
+	z<-R/R.range[i]
+	potential.adj<-cbind(potential.adj,z)
+}
+
+#
+x <- as.matrix(cbind(primary,potential.adj))  
+K <- diag(c(rep(0,p1),rep(1,p2)))
+if(qr(primary)$rank==p1){
+  bd<-det(t(x)%*%x+K/tau^2)	^(1/(p1+p2))
+#	        bd<-1/tr(solve(t(x)%*%solve(S)%*%x+K/tau^2))		        
+}else{
+	bd<-0
+}	
+```
+
+

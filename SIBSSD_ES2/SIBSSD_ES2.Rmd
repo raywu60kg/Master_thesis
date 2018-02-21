@@ -214,11 +214,11 @@ SIBSSD_test <- function(test.value, particle, N, m, qLB, qGB, iteration, early.b
 
 #test
 ```{r}
-N <- 6
-m <- 10
-qLB <- round(m/4)
-qGB <- round(m/6)
-SIBSSD(particle = 5, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 10, early.break = 100)
+# N <- 6
+# m <- 10
+# qLB <- round(m/4)
+# qGB <- round(m/6)
+# SIBSSD(particle = 5, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 10, early.break = 100)
 ```
 
 ```{r}
@@ -228,20 +228,20 @@ N <- 14
 m <- 23
 qLB <- round(m/3)
 qGB <- round(m/6)
-SIBSSD(particle = 100, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 150,early.break = 100)
+SIBSSD(particle = 10, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 10,early.break = 100)
 toc()
 ```
 
 time 10480.03 sec elapsed
 ```{r}
-library(tictoc)
-tic()
-N <- 10
-m <- 18
-qLB <- round(m/3)
-qGB <- round(m/6)
-SIBSSD(particle = 500, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 500,early.break = 100)
-toc()
+# library(tictoc)
+# tic()
+# N <- 10
+# m <- 18
+# qLB <- round(m/3)
+# qGB <- round(m/6)
+# SIBSSD(particle = 500, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 500,early.break = 100)
+# toc()
 ```
 
 time 1564.22 sec elapsed

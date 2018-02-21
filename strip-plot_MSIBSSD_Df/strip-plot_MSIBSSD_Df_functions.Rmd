@@ -247,5 +247,126 @@ moveOperation <- function(particle, mSIBSSD.list, w.ratio, mixwLB, mixwGB, qLB, 
   return(mSIBSSD.list)
 }
 ```
+```{r}
+mixOperation.test <- function(particle, mSIBSSD.list, LB, GB, qLB, qGB, U2){
+  mixwLB <- list()
+  mixwGB <- list()
+  for(i in 1:particle){
+    worksheet <- mSIBSSD.list[[i]]
+    
+    ###mixwLB###
+    #column deletion step 
+    tem <- worksheet
+    tem.m1 <- m1
+    tem.m2 <- m2
+
+    
+    for(j in 1:qLB){
+      lack.value <- numeric(qLB)
+      for(k in 1:(tem.m1 + tem.m2)){
+        lack.value[k] <- Dcriterion_add_delete(mSSD = tem[ ,-k], column = tem[,k],U2 = U2, f = f, m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)  
+      }
+      if(which.min(lack.value) <= tem.m1){
+        tem.m1 <- tem.m1 - 1 
+      }else{
+        tem.m2 <- tem.m2 - 1  
+      }
+      tem <- tem[,-which.min(lack.value)] 
+    }
+    print(paste("whole plot : ",m1 - tem.m1, "sub plot : ",m2 - tem.m2))
+    #column addition step
+    #wholeplot
+    w.qLB <- m1 - tem.m1
+    s.qLB <- m2 - tem.m2
+    add.matrix <- LB[[i]]$design
+    if(w.qLB != 0){
+      for(j in 1:w.qLB){
+        add.value <- numeric(m1)   
+        for(k in 1:m1){
+          
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,k], U2 = U2, f = f,m1 = tem.m1 , m2 = tem.m2, n1 = n1,n2 = n2)
+        }
+        tem <- cbind(add.matrix[,which.max(add.value)], tem)
+        tem.m1 <- tem.m1 + 1
+      }
+    }
+    #subplot
+    if(s.qLB != 0){
+      for(j in 1:s.qLB){
+        add.value <- numeric(m2)   
+        for(k in 1:m2){
+          
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,m1 + k], U2 = U2, f = f,m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)
+        }
+        tem <- cbind(tem,add.matrix[,tem.m1 + which.max(add.value)])
+        tem.m2 <- tem.m2 + 1
+      }
+    }
+    
+    ###
+    mixwLB[[i]] <- list(design = tem,value = Dcriterion_stripplot(mSSD = tem, U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2))  #important value
+    ###
+    
+    ###mixwGB###
+    #column deletion step 
+    tem <- worksheet
+    tem.m1 <- m1
+    tem.m2 <- m2
+
+    
+    for(j in 1:qGB){
+      lack.value <- numeric(qGB)
+      for(k in 1:(tem.m1 + tem.m2)){
+        lack.value[k] <- Dcriterion_add_delete(mSSD = tem[ ,-k], column = tem[,k],U2 = U2, f = f, m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)  
+      }
+      if(which.min(lack.value) <= tem.m1){
+        tem.m1 <- tem.m1 - 1 
+      }else{
+        tem.m2 <- tem.m2 - 1  
+      }
+      tem <- tem[,-which.min(lack.value)] 
+    }
+    
+    
+    #column addition step
+    #wholeplot
+    add.matrix <- GB$design
+    w.qGB <- m1 - tem.m1
+    s.qGB <- m2 - tem.m2
+    if(w.qGB != 0){
+      for(j in 1:w.qGB){
+        add.value <- numeric(m1)   
+        for(k in 1:m1){
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,k], U2 = U2, f = f,m1 = tem.m1 , m2 = tem.m2, n1 = n1,n2 = n2) 
+        }
+        tem <- cbind(add.matrix[,which.max(add.value)], tem)
+        tem.m1 <- tem.m1 + 1
+      }
+    }
+    #subplot
+    if(s.qGB != 0){
+      for(j in 1:s.qGB){
+        add.value <- numeric(m2)   
+        for(k in 1:m2){
+          
+          add.value[k] <- Dcriterion_add_delete(mSSD = tem, column = add.matrix[ ,m1 + k], U2 = U2, f = f,m1 = tem.m1, m2 = tem.m2, n1 = n1,n2 = n2)
+        }
+        tem <- cbind(tem,add.matrix[,tem.m1 + which.max(add.value)])
+        tem.m2 <- tem.m2 + 1
+      }
+    }
+    
+    ###
+    mixwGB[[i]] <- list(design = tem,value = Dcriterion_stripplot(mSSD = tem, U2 = U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2))  #important value    
+    ###
+  
+    
+    
+    #column addition step
+  }
+  return(list(mixwLB = mixwLB, mixwGB = mixwGB))
+  
+}
+```
 
 

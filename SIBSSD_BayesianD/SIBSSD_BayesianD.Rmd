@@ -1,0 +1,146 @@
+---
+title: "SIBSSD_BayesianD"
+output: html_document
+---
+```{r}
+A <- as.matrix(read.csv("D:/statisic/Master_thesis/SIBSSD_BayesianD/24x30A.csv",header = F))
+Table2 <- read.csv("D:/statisic/Master_thesis/SIBSSD_BayesianD/Table2.csv",header = F)
+```
+
+```{r}
+evaluateEs2 <- function(SSD){
+  index.matrix <- combn(ncol(SSD),2)
+  Es2 <- 0
+  for(i in 1:ncol(index.matrix)){
+    Es2 <- (SSD[,index.matrix[,i][1]] %*% SSD[,index.matrix[,i][2]])^2 + Es2 
+  }
+  return(Es2/choose(ncol(SSD), 2))
+}
+evaluateEs2(A)
+```
+
+
+```{r}
+source_rmd <- function(file, local = FALSE, ...){
+  options(knitr.duplicate.label = 'allow')
+
+  tempR <- tempfile(tmpdir = ".", fileext = ".R")
+  on.exit(unlink(tempR))
+  knitr::purl(file, output=tempR, quiet = TRUE)
+
+  envir <- globalenv()
+  source(tempR, local = envir, ...)
+}
+Sys.setlocale('LC_ALL','C')
+source_rmd("D:/statisic/Master_thesis/SIBSSD_BayesianD/SIBSSD_BayesianD_functions.Rmd")
+```
+
+# main function
+```{r}
+SIBSSD_BayesianD <- function(particle, N, m, qLB, qGB, iteration, early.break = 100){
+  
+  #1: Randomly generate a set of balanced N*m SSDs as initial particles
+  SIBSSD.list <- list()
+  for(i in 1:particle){
+    SIBSSD.list[[i]] <- generateSSD(N = N, m = m)  
+  }
+  
+  #2: Evaluate objective function value of each SSD
+  BayesianD.value <- sapply(SIBSSD.list,evaluateBayesianD)
+  
+  #3: Initialize the LB for all SSDs
+  LB <- list()
+  for(i in 1:particle){
+    LB[[i]] <- list(design = SIBSSD.list[[i]], value = BayesianD.value[i])   
+  }
+  
+  #4: Initialize the GB
+  GB <- LB[[1]]
+  for(i in 1:particle){
+    if(LB[[i]]$value > GB$value)
+    GB <- LB[[i]]   
+  }
+  
+  #record the GB value
+  record <- GB$value
+  
+  #5: while not converge do
+  progress <- 0             #index for print when make progress and early break
+  break.index <- 1
+  for(i in 1:iteration){
+    
+    #deal with early break and print when make progress
+    if((i - break.index) >= early.break){
+      break  
+    }else if(progress == 1){
+      print(GB)
+      progress <- 0
+      break.index <- i
+    }
+
+    
+    
+    #6: For each SSD, perform the MIX operation 
+    mixw <- mixOperation(particle = particle, SIBSSD.list = SIBSSD.list, LB = LB,GB = GB, qLB = qLB, qGB = qGB)
+    
+    
+
+    #7: For each SSD, perform the MOVE operation
+    SIBSSD.list <- moveOperation(particle = particle,
+                                 SIBSSD.list = SIBSSD.list, 
+                                 mixwLB = mixw$mixwLB, 
+                                 mixwGB = mixw$mixwGB, 
+                                 qLB = qLB, 
+                                 qGB = qGB)
+    
+    #9: Update the LB for all SSDs
+    BayesianD.value <- sapply(SIBSSD.list,evaluateBayesianD)
+
+    for(j in 1:particle){
+      if(BayesianD.value[j] > LB[[j]]$value){
+        LB[[j]] <- list(design = SIBSSD.list[[j]], value = BayesianD.value[j])  
+      }
+    }
+    
+    #10: Update the GB
+    if(max(BayesianD.value) > GB$value){
+      GB <- LB[[which.max(BayesianD.value)]] 
+      progress <- 1
+    }
+  
+  record <- c(record,GB$value)
+
+  #11: end while
+  }
+  return(list(GB,record))  
+}
+```
+
+#####start#####
+#test
+```{r}
+library(tictoc)
+tic()
+N <- 24
+m <- 30
+qLB <- round(m/3)
+qGB <- round(m/6)
+SIBSSD_BayesianD(particle = 10, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 10,early.break = 100)
+toc()
+```
+
+#500 particles
+```{r}
+library(tictoc)
+tic()
+N <- 24
+m <- 30
+qLB <- round(m/3)
+qGB <- round(m/6)
+test <- SIBSSD_BayesianD(particle = 500, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 500,early.break = 100)
+toc()
+```
+```{r}
+write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
+```
+
