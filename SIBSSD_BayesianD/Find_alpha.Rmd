@@ -97,16 +97,17 @@ alpha
 
 # all terms except the intercept are potential terms(24,30)
 ```{r}
-xpri <- rep(1,24)
-xpot <- A
-alpha<-as.matrix(lm(xpot~xpri-1)$coefficients)
-R<-xpot-xpri%*%alpha
-max(R)-min(R)
-z1<-R/(max(R)-min(R))
-z1
-alpha
+# xpri <- rep(1,24)
+# xpot <- A
+# alpha<-as.matrix(lm(xpot~xpri-1)$coefficients)
+# R<-xpot-xpri%*%alpha
+# max(R)-min(R)
+# z1<-R/(max(R)-min(R))
+# z1
+# alpha
 ```
-# we assume that the first p1−1
+
+# we assume that the first p1
 factors are known to be active and the remaining p2 factors are to be screened(12,16)
 ```{r}
 n <- 2^15
@@ -231,9 +232,8 @@ evaluateBayesianD(SSD)
 ```
 
 
-# we assume that the first p1−1 factors are known to be active and the remaining p2 factors are to be screened
+# we assume that the first p1 factors are known to be active and the remaining p2 factors are to be screened
 ```{r}
-
 random.row <- sample.int(2^30,10000)
 #n <- 10000
 index <- c(1,-1)

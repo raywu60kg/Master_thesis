@@ -50,7 +50,7 @@ adjustOperation <- function(column){
       tem.column <- column
       
       #1 to -1
-      tem.column[positive.index[change.index[,i]]] <- -1
+      tem.column[positive.index[change.index[,i]]] <- -1  #change index?
       
       #-1 to 1
       tem.column[nagtive.index[change.index[,j]]] <- 1

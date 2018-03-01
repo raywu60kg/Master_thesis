@@ -34,6 +34,9 @@ source_rmd <- function(file, local = FALSE, ...){
 Sys.setlocale('LC_ALL','C')
 source_rmd("D:/statisic/Master_thesis/SIBSSD_BayesianD/SIBSSD_BayesianD_functions.Rmd")
 ```
+```{r}
+evaluateBayesianD(A)
+```
 
 # main function
 ```{r}
@@ -142,5 +145,10 @@ toc()
 ```
 ```{r}
 write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
+```
+
+```{r}
+design <- as.matrix(read.csv("D:/statisic/Master_thesis/SIBSSD_BayesianD/design.csv",header = T))
+evaluateEs2(design) 
 ```
 

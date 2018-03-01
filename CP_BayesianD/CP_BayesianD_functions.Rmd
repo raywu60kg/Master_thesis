@@ -1,0 +1,128 @@
+---
+title: "CP_BayesianD_functions"
+output: html_document
+---
+
+```{r}
+evaluateBayesianD <- function(SSD){
+  tau <- sqrt(5)
+  m <- ncol(SSD)
+  
+  #primary
+  primary <- matrix(1,nrow = nrow(SSD),1)
+  p1 <- ncol(primary)
+  
+  #potential
+  potential <- SSD
+  p2 <- ncol(potential)
+  potential.adj <- potential / 2   
+  
+  
+  
+  x <- as.matrix(cbind(primary,potential.adj))  
+  K <- diag(c(rep(0,p1),rep(1,p2)))
+  if(qr(primary)$rank==p1){
+        bd<-det(t(x)%*%x+K/tau^2)	^(1/(p1+p2))
+       #bd<-1/tr(solve(t(x)%*%solve(S)%*%x+K/tau^2))		        
+	}else{
+		bd<-0
+	}	
+  #bd <- det(t(x)%*%x + K/tau^2)^(1/(p1+p2))
+  return(bd)
+}
+```
+
+```{r}
+generateSSD <- function(N,m){
+  SSD <- matrix(NA,N,m)
+  tem <- c(rep(-1,N/2),rep(1,N/2))
+  for(i in 1:m){
+    SSD[,i] <- sample(tem,N)
+  }
+  return(SSD)
+}
+```
+
+
+```{r}
+
+deleteOperation <- function(design,k){
+  #k is number of delete columns
+  delete.column <- c()
+  for(i in 1:k){
+    delete.value <- numeric(ncol(design))
+    for(j in 1:ncol(design)){
+      delete.value[j] <- evaluateBayesianD(design[ ,-j])  
+    }
+    delete.column <- cbind(delete.column, design[,which.max(delete.value)])
+    design <- design[,-which.max(delete.value)]
+  }
+  
+  
+  return(list(design = design, delete.column = delete.column))
+}
+```
+
+```{r}
+adjustOperation <- function(column){
+  # candidate <- c()
+  # positive.index <- which(column == 1)
+  # nagtive.index <- which(column == -1)
+  # 
+  # for(i in 1:ncol(combn(length(column)/2, 1))){
+  #   for(j in 1:ncol(combn(length(column)/2, 1))){
+  #     tem.column <- column
+  #     
+  #     #1 to -1
+  #     tem.column[positive.index[change.index[,i]]] <- -1
+  #     
+  #     #-1 to 1
+  #     tem.column[nagtive.index[change.index[,j]]] <- 1
+  #     candidate <- cbind(candidate, tem.column)     
+  #   }
+  # }
+  
+  candidate <- c()
+  for(i in 1:ncol(column)){
+    adjust.column <- column[,i]
+    positive.index <- which(adjust.column == 1)
+    nagtive.index <- which(adjust.column == -1)
+    
+    for(j in 1:((nrow(column))/2)){
+      for(k in 1:((nrow(column))/2)){
+        tem.column <- adjust.column
+        
+        #1 to -1
+        tem.column[positive.index[j]] <- -1
+        
+        #-1 to 1
+        tem.column[nagtive.index[k]] <- 1
+        candidate <- cbind(candidate, tem.column)
+      }  
+    }
+  }
+      
+  
+  colnames(candidate) <- NULL
+  return(candidate)
+}
+```
+
+```{r}
+addOperation <- function(design, candidate.set, k){
+  #k is number of delete columns
+  for(i in 1:k){
+    add.value <- numeric(ncol(candidate.set))
+    for(j in 1:ncol(candidate.set)){
+      add.value[j] <- evaluateBayesianD(cbind(design, candidate.set[,i])) 
+    }
+    design <- cbind(design, candidate.set[, which.max(add.value)])
+    candidate.set <- candidate.set[,-which.max(add.value)]
+  }
+  
+  
+  
+  return(list(design = design, value = max(add.value)))
+}
+```
+

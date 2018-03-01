@@ -1,5 +1,5 @@
 ---
-title: "CP_ES2"
+title: "CP_BayesianD"
 output: html_document
 ---
 Algorithm :
@@ -9,7 +9,7 @@ Algorithm :
 4. Add column at the candidate set with the largest object value.
 5. Repeat steps 2,3,4 until no improvement can be made.
 
-#how to read rmd
+#read functions
 ```{r}
 source_rmd <- function(file, local = FALSE, ...){
   options(knitr.duplicate.label = 'allow')
@@ -21,50 +21,48 @@ source_rmd <- function(file, local = FALSE, ...){
   envir <- globalenv()
   source(tempR, local = envir, ...)
 }
-```
-
 #read functions
-```{r}
+
 Sys.setlocale('LC_ALL','C')
-source_rmd("D:/statisic/Master_thesis/CP_ES2/CP_ES2_functions.Rmd")
+source_rmd("D:/statisic/Master_thesis/CP_BayesianD/CP_BayesianD_functions.Rmd")
 ```
 
 ```{r}
-columewisePairwise <- function(starting.design, N, m){
+CP_BayesianD <- function(starting.design, N, m, k){
   
   for(i in 1:starting.design){
 
-    # if(added.design$value < best.design$value){
+    # if(added.design$value > best.design$value){
     #   best.design <- added.design
     #   print(best.design)
     # }
     
     #1. Generate a balanced N*m SSDs
     tem.desgn <- generateSSD(N = N,m = m)  
-    Es2.value <- evaluateEs2(tem.desgn)
+    BayesianD.value <- evaluateBayesianD(tem.desgn)
     
     #5. Repeat steps 2,3,4 until no improvement can be made.
     progress <- 0
     while(progress == 0){
       
       #2. Delete k columns which have the smallest object value.(k=1)
-      deleted.design <- deleteOperation(design = tem.desgn)  
+      deleted.design <- deleteOperation(design = tem.desgn,k = k)  
       
       #3. Adjust the delete columns as candidate set.(only first order)
       candidate.set <- adjustOperation(column = deleted.design$delete.column)
       
       #4. Add column at the candidate set with the largest object value.
-      added.design <- addOperation(design = deleted.design$design, candidate.set = candidate.set)
+      added.design <- addOperation(design = deleted.design$design, candidate.set = candidate.set, k = k)
       
-      if(added.design$value < Es2.value){
-        Es2.value <- added.design$value
+      if(added.design$value > BayesianD.value){
+        BayesianD.value <- added.design$value 
         tem.desgn <- added.design$design
       }else{
         progress <- 1    
       }
     }
     tryCatch({
-      if(added.design$value < best.design$value){
+      if(added.design$value > best.design$value){
         best.design <- added.design
         print(best.design)
       }
@@ -78,17 +76,15 @@ columewisePairwise <- function(starting.design, N, m){
 }
 
 ```
-$value
-[1] 6.928105
 
-53946.2 sec elapsed
+#####start#####
+#test
 ```{r}
 library(tictoc)
 tic()
-N = 10
-m = 18
-columewisePairwise(starting.design = 1000000,N = 10, m = 18)
+N <- 24
+m <- 30
+k <- round(m/3)
+result <- CP_BayesianD(starting.design = 100000, N = N, m = m, k = k)
 toc()
 ```
-
-

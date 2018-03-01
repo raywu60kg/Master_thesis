@@ -1,0 +1,78 @@
+---
+title: "Find_alpha"
+output: html_document
+---
+
+```{r}
+MSSD <- as.matrix(read.csv("D:/statisic/Master_thesis/spilt-plot_MSIBSSD_BayesianD/table1.csv",header = F))
+print(MSSD)
+```
+
+```{r}
+find_alpha_R <- function(m){
+  random.row <- sample.int(2^m,10000) #choose 10000 times to approximate true value
+
+  index <- c(1,-1)
+  inf.matrix <- c()
+  # rep(rep(c(1,-1),each = n/2),1)
+  # rep(rep(c(1,-1),each = n/4),2)
+  #for(i in 1:n){
+  for(i in random.row){
+    tem.matrix <- numeric(m)+1
+    tem <- i
+    for(j in 1:m){
+      if(tem == 0){
+        break
+      }else{
+        tem <- tem/2
+        quotient <- floor(tem)
+        remainder <- tem - quotient 
+        tem.matrix[m-j+1] <- index[(remainder != 0)+1]
+        tem <- quotient 
+      }
+      
+    }
+    
+    inf.matrix <- rbind(inf.matrix, tem.matrix)
+  }
+  
+  xpri <- matrix(1,nrow = nrow(inf.matrix),1)
+  xpot <- inf.matrix
+  #xpri <- cbind(1,xpri)
+  #solve(t(xpri) %*% xpri) %*% t(xpri) %*% xpot
+  alpha <- as.matrix(lm(xpot~xpri-1)$coefficients)
+  #xpri <- cbind(1,xpri)
+  R <- xpot-xpri%*%alpha
+  R.range <- apply(R,2,max) - apply(R,2,min)
+  #print(alpha)
+  #print(R)
+ 
+  
+  return(list(alpha = alpha, R.range = R.range))      
+}
+```
+```{r}
+for(i in 1:5){
+  alpha_R <- find_alpha_R(16)
+  print(alpha_R)
+}
+```
+```{r}
+MSSD
+primary <- matrix(1, nrow = nrow(MSSD))
+potential <- MSSD
+alpha <- alpha_R$alpha
+R.range <- alpha_R$R.range
+
+
+
+xpot<-potential
+R<-xpot-primary%*%matrix(alpha,1) 
+potential.adj <- c()
+for(i in 1:length(R.range)){
+  z<-R[,i]/R.range[i]
+  potential.adj<-cbind(potential.adj,z)  
+}
+potential.adj
+```
+
