@@ -140,7 +140,7 @@ N <- 24
 m <- 30
 qLB <- round(m/3)
 qGB <- round(m/6)
-test <- SIBSSD_BayesianD(particle = 500, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 500,early.break = 100)
+test <- SIBSSD_BayesianD(particle = 800, N = N, m = m, qLB = qLB, qGB = qGB, iteration = 800,early.break = 100)
 toc()
 ```
 ```{r}

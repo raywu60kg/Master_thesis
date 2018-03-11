@@ -1,12 +1,48 @@
 ---
-title: "spilt-plot_MSIBSSD_BayesianD_functions"
+title: "strip-plot_MSIBSSD_BayesianD_functions"
 output: html_document
 ---
-Denote m1 the number
-of whole-plot factors, m2 the number of subplot factors, n1 the number of whole plots, n2
-the number of subplots within each whole plot.
 ```{r}
-evaluateMBayesianD <- function(MSSD, n1 ,n2){
+generateSPD <- function(index.U2, m1, m2, n1, n2){
+  tem.w <- rep(c(-1, 1), each = n1/2)
+  tem.s <- rep(c(-1, 1), each = 6/2)
+  wholeplot <- matrix(0, n1*n2, m1)
+  tem.subplot <- matrix(0, 6, m2)
+  subplot <- matrix(0, n1*n2, m2)
+  
+  for(i in 1:m1){
+    wholeplot[ ,i] <- rep(sample(tem.w,n1), each = n2)  
+  }
+  
+  for(i in 1:m2){
+    tem.subplot[ ,i] <- sample(tem.s,6)
+  }
+  for(i in 1:length(index.U2)){
+    subplot[i, ] <- tem.subplot[index.U2[i], ]
+  }
+  return(cbind(wholeplot, subplot))
+}
+
+```
+
+```{r}
+Dcriterion_stripplot <- function(mSSD,U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2){
+  index.matrix <- combn(ncol(mSSD), f)
+  library(Matrix)   
+  U1 <- kronecker(diag(n1),matrix(1,n2,1))
+  S <- diag(n1 * n2) + (2 * U1 %*% t(U1)) + (2 * U2 %*% t(U2)) # 2 is from paper
+  
+  Df <- 0
+  for(i in 1:ncol(index.matrix)){
+    Xf <- cbind(1, mSSD[ ,index.matrix[,i]])
+    Df <- Df + det(t(Xf) %*% solve(S) %*% Xf)^(1/(f+1))
+  }
+  return(Df / choose(ncol(mSSD), f))
+}
+```
+
+```{r}
+evaluateMBayesianD <- function(MSSD, U2, n1 ,n2){
   tau <- sqrt(5)
   m <- ncol(MSSD)
   
@@ -21,14 +57,14 @@ evaluateMBayesianD <- function(MSSD, n1 ,n2){
   
   #get S 
   library(Matrix)   
-  Z <- kronecker(diag(n1),matrix(1,n2,1))
-  S <- diag(n1 * n2) + (1 * Z %*% t(Z))
+  U1 <- kronecker(diag(n1),matrix(1,n2,1))
+  S <- diag(n1 * n2) + (2 * U1 %*% t(U1)) + (2 * U2 %*% t(U2)) # 2 is from paper
   
   x <- as.matrix(cbind(primary,potential.adj))  
   K <- diag(c(rep(0,p1),rep(1,p2)))
   if(qr(primary)$rank==p1){
-        bd<-det(t(x)%*%solve(S)%*%x+K/tau^2)	^(1/(p1+p2))
-       #bd<-1/tr(solve(t(x)%*%solve(S)%*%x+K/tau^2))		        
+    #bd<-det(t(x)%*%solve(S)%*%x+K/tau^2)	^(1/(p1+p2))
+    bd<-det(round(t(x)%*%solve(S)%*%x+K/tau^2,5))	^(1/(p1+p2))   		        
 	}else{
 		bd<-0
 	}	
@@ -36,26 +72,6 @@ evaluateMBayesianD <- function(MSSD, n1 ,n2){
   return(bd)
 }
 ```
-
-```{r}
-generateMSSD <- function(m1, m2, n1, n2){
-  tem <- rep(c(-1, 1), each = n2/2)
-  wholeplot <- matrix(0, n1*n2, m1)
-  subplot <- matrix(0, n1*n2, m2)
-  
-  for(i in 1:m1){
-    wholeplot[ ,i] <- rep(sample(tem,n2), each = n2)  
-  }
-  
-  for(i in 1:m2){
-    for(j in 1:n1){
-      subplot[(n2*j-(n2-1)):((n2*j-(n2-1))+n2-1),i] <- sample(tem,n2)     
-    }
-  }
-  return(cbind(wholeplot, subplot))
-}
-```
-
 
 ```{r}
 mixOperation <- function(particle, mSIBSSD.list, w.ratio = 0.2, LB, GB, qLB, qGB){
@@ -184,18 +200,19 @@ mixOperation <- function(particle, mSIBSSD.list, w.ratio = 0.2, LB, GB, qLB, qGB
           add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem), n1 = n1,n2 = n2)
         }
         tem <- cbind(add.matrix[,which.max(add.value)], tem)
+        tem.m1 <- tem.m1 + 1
       }
     }
-    
     #subplot
     if(s.qGB != 0){
       for(j in 1:s.qGB){
         add.value <- numeric(m2)   
         for(k in 1:m2){
           
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,m1 + k],tem), n1 = n1,n2 = n2)
+          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem, add.matrix[ ,m1 + k]), n1 = n1,n2 = n2)
         }
-        tem <- cbind(add.matrix[,tem.m1 + which.max(add.value)],tem)
+        tem <- cbind(tem,add.matrix[,tem.m1 + which.max(add.value)])
+        tem.m2 <- tem.m2 + 1
       }
     }
     

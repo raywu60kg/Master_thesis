@@ -31,7 +31,9 @@ source_rmd("D:/statisic/Master_thesis/spilt-plot_MSIBSSD_BayesianD/spilt-plot_MS
 ```
 ```{r}
 evaluateMBayesianD(MSSD = MSSD, n1 = n1, n2 = n2)
+evaluateMBayesianD(MSSD = MSSD[,-1], n1 = n1, n2 = n2)
 ```
+
 
 ```{r}
 Dcriterion <- function(mSSD, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n2){
@@ -173,4 +175,7 @@ result
 Dcriterion(mSSD = result[[1]]$design,f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
 ```
 
+```{r}
+write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
+```
 
