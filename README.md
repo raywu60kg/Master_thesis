@@ -20,8 +20,8 @@ GB(global best) is the largest objective function value from all particles (SSDs
 which share information by comparing its LB with other LBs.<br /> 
 
 ### MIX operation:    
-  For each of the generated candidate SSD,replace qLB = [m1+m2]/3 or  
-[m1+m2]/4 and qGB = [m1+m2]/6 from the LB and GB ,respectively. 
+  For each of the generated candidate SSD,replace qLB = (m1+m2)/3 or  
+(m1+m2)/4 and qGB = (m1+m2)/6 from the LB and GB ,respectively. 
 
 we do the following step:   
 * Radomly chioce the number of columns to exchange for whole plot and sub plot,    
