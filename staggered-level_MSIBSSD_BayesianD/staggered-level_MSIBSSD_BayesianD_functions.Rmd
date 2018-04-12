@@ -134,7 +134,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
           lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-(tem.m1 + tem.m2 + k)],U2 = U2, b1 = b1,n2 = n2)  
         }  
         tem <- tem[,-(tem.m1 + tem.m2 + which.max(lack.value))] 
-        tem.m2 <- tem.m2 - 1 
+        tem.m3 <- tem.m3 - 1 
       }
     }
     
@@ -151,15 +151,16 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
           add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem),U2 = U2, b1 = b1,n2 = n2)
         }
         tem <- cbind(add.matrix[,which.max(add.value)], tem)
+        
       }
     }
-    
+   
     #wholeplot2
     add.matrix <- LB[[i]]$design
     if(w.qLB[2] != 0){
       for(j in 1:w.qLB[2]){
         add.value <- numeric(m2)   
-        for(k in 1:m1){
+        for(k in 1:m2){
           
           add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
         }
@@ -211,7 +212,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
         }  
         tem <- tem[,-which.max(lack.value)] 
         tem.m1 <- tem.m1 - 1 
-        #lack.m1 <- lack.m1 + 1
+        
       }
     }
     
@@ -235,7 +236,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
           lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-(tem.m1 + tem.m2 + k)],U2 = U2, b1 = b1,n2 = n2)  
         }  
         tem <- tem[,-(tem.m1 + tem.m2 + which.max(lack.value))] 
-        tem.m2 <- tem.m2 - 1 
+        tem.m3 <- tem.m3 - 1 
       }
     }
     
@@ -261,7 +262,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
     if(w.qGB[2] != 0){
       for(j in 1:w.qGB[2]){
         add.value <- numeric(m2)   
-        for(k in 1:m1){
+        for(k in 1:m2){
           
           add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
         }
@@ -331,7 +332,7 @@ moveOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.rati
       
       #subplot
       if(s.qLB != 0){
-        s.replace.index <- sample(m3,s.qLB)
+        s.replace.index <- sample(m3,size = s.qLB)
         mSIBSSD.list[[i]][,m1+m2+s.replace.index] <- replace.matrix[,m1+m2+s.replace.index]  
       }
       

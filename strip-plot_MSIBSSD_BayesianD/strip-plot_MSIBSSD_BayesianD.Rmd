@@ -55,6 +55,7 @@ evaluateMBayesianD(MSSD = table5b, U2 = U2, n1 = n1, n2 = n2)
 ```{r}
 test <- generateSPD(index.U2 = index.U2, m1 = m1, m2 = m2, n1 = n1, n2 = n2)
 evaluateMBayesianD(MSSD = test, U2 = U2, n1 = n1, n2 = n2)
+Dcriterion_stripplot(mSSD = test, U2 = U2, f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
 ```
 
 ```{r}

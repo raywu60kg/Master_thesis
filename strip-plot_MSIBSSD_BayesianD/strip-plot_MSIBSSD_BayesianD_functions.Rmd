@@ -43,7 +43,7 @@ Dcriterion_stripplot <- function(mSSD,U2, f = f,m1 = m1, m2 = m2, n1 = n1,n2 = n
 
 ```{r}
 evaluateMBayesianD <- function(MSSD, U2, n1 ,n2){
-  tau <- sqrt(5)
+  tau <- sqrt(1)
   m <- ncol(MSSD)
   
   #primary

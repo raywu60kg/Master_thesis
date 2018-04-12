@@ -166,7 +166,7 @@ n2 = 6
 qLB = 4
 qGB = 3
 w.ratio = 0.2
-result <- spilt_plot_MSIBSSD_BayesianD(particle = 500, m1 = m1, m2 = m2, n1 = n1, n2 = n2, qLB = qLB, qGB = qGB,w.ratio = w.ratio, iteration = 500,early.break = 100)
+result <- spilt_plot_MSIBSSD_BayesianD(particle = 800, m1 = m1, m2 = m2, n1 = n1, n2 = n2, qLB = qLB, qGB = qGB,w.ratio = w.ratio, iteration = 800,early.break = 100)
 toc()
 ```
 
@@ -176,6 +176,6 @@ Dcriterion(mSSD = result[[1]]$design,f = 2,m1 = m1, m2 = m2, n1 = n1,n2 = n2)
 ```
 
 ```{r}
-write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
+write.csv(result[[1]]$design,"design.csv",row.names = F, col.names = F)
 ```
 

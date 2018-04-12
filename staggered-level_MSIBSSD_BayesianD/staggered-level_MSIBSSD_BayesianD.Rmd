@@ -217,7 +217,7 @@ test <- staggered_level_MSIBSSD_BayesianD(particle = 500,
                                           qGB = qGB, 
                                           w.ratio = w.ratio, 
                                           iteration = 500, 
-                                          early.break = 100)
+                                          early.break = 500)
 #Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 ```
 ```{r}
