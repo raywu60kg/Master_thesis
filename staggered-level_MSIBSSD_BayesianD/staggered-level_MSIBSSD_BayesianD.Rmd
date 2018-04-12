@@ -229,3 +229,4 @@ Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
 ```
 
+
