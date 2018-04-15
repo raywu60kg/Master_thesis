@@ -72,15 +72,15 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
     # }
     
     #1. Generate a balanced N*m SSDs
-    tem.desgn <- generateSLD(m1 = m1, m2 = m2,m3 = m3, b1 = b1, n2 = n2)  
-    BayesianD.value <- evaluateMBayesianD(MSSD = tem.desgn, U2 = U2, b1 =b1, n2 = n2)
+    tem.design <- generateSLD(m1 = m1, m2 = m2,m3 = m3, b1 = b1, n2 = n2)  
+    BayesianD.value <- evaluateMBayesianD(MSSD = tem.design, U2 = U2, b1 =b1, n2 = n2)
 
     #5. Repeat steps 2,3,4 until no improvement can be made.
     progress <- 0
     while(progress == 0){
       
       #2. Delete k columns which have the smallest object value.(k=1)
-      deleted.design <- deleteOperation(design = tem.desgn,
+      deleted.design <- deleteOperation(design = tem.design,
                                         U2 = U2, 
                                         b1 = b1,
                                         n2 = n2,
@@ -108,12 +108,12 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
       
       if(added.design$value > BayesianD.value){
         BayesianD.value <- added.design$value 
-        tem.desgn <- added.design$design
+        tem.design <- added.design$design
       }else{
         progress <- 1    
       }
     }
-    record <- c(record,best.design$value)
+    
     tryCatch({
       if(added.design$value > best.design$value){
         best.design <- added.design
@@ -123,7 +123,7 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
       }, error = function(err){
         best.design <<- added.design
       })
-    
+    record <- c(record,best.design$value)
     
   } 
   return(list(best.design = best.design,record = record))

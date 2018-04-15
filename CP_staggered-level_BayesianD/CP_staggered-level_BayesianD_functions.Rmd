@@ -90,7 +90,7 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
   for(i in 1:k){
     delete.value <- numeric(ncol(design))
     for(j in 1:ncol(design)){
-      delete.value[j] <- evaluateMBayesianD(MSSD = tem.desgn[,-j], U2 = U2, b1 =b1, n2 = n2)  
+      delete.value[j] <- evaluateMBayesianD(MSSD = design[,-j], U2 = U2, b1 =b1, n2 = n2)  
     }
     if(which.max(delete.value) <= tem.m1){
       delete.column.m1 <- cbind(delete.column.m1, design[,which.max(delete.value)])

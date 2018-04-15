@@ -99,7 +99,7 @@ staggered_level_MSIBSSD_BayesianD <- function(particle,U2, m1, m2, m3, b1, n2, q
     if((i - break.index) >= early.break){
       break  
     }else if(progress == 1){
-      print(GB)
+      print(paste("iteration:",i,",value:",GB$value))
       progress <- 0
       break.index <- i
     }
@@ -177,8 +177,8 @@ n2 <- 4
 qLB <- round((m1+m2+m3)/3)
 qGB <- round((m1+m2+m3)/6)
 
-w.ratio = 0.01
-test <- staggered_level_MSIBSSD_BayesianD(particle = 10,
+w.ratio = 0.1
+test <- staggered_level_MSIBSSD_BayesianD(particle = 5,
                                           U2 = U2, 
                                           m1 = m1, 
                                           m2 = m2, 
@@ -188,7 +188,7 @@ test <- staggered_level_MSIBSSD_BayesianD(particle = 10,
                                           qLB = qLB, 
                                           qGB = qGB, 
                                           w.ratio = w.ratio, 
-                                          iteration = 10, 
+                                          iteration = 5, 
                                           early.break = 100)
 Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 ```
@@ -202,11 +202,11 @@ b2 <- 7
 b3 <- 24
 n <- 24
 n2 <- 4
-qLB <- round((m1+m2+m3)/3)
-qGB <- round((m1+m2+m3)/6)
+qLB <- floor((m1+m2+m3)/3)
+qGB <- floor((m1+m2+m3)/6)
 
-w.ratio = 0.1
-test <- staggered_level_MSIBSSD_BayesianD(particle = 500,
+w.ratio = 0.05
+test <- staggered_level_MSIBSSD_BayesianD(particle = 800,
                                           U2 = U2, 
                                           m1 = m1, 
                                           m2 = m2, 
@@ -227,6 +227,34 @@ Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 
 ```{r}
 write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
+```
+```{r}
+for(i in 1:10000){
+    w.qGB <- rbinom(n = 2, size = qGB, prob = w.ratio)
+    if(w.qGB[1] > m1 -1){
+      w.qGB[1] <- m1 -1  
+    }else if(w.qGB[2] > m2 -1){
+      w.qGB[2] <- m2 -1
+    }else if(sum(w.qGB) > qGB){
+      w.qGB[which.max(w.qGB)] <- max(w.qGB) - (sum(w.qGB)-qGB)
+    }
+    s.qGB <- qGB - w.qGB[1] - w.qGB[2]
+    print(s.qGB + sum(w.qGB))
+}
+```
+```{r}
+for(i in 1:10000){
+    w.qLB <- rbinom(n = 2, size = qLB, prob = 0.2)
+    if(w.qLB[1] > m1-1){
+      w.qLB[1] <- m1 - 1 
+    }else if(w.qLB[2] > m2-1){
+      w.qLB[2] <- m2 - 1
+    }else if(sum(w.qLB) > qLB){
+      w.qLB[which.max(w.qLB)] <- max(w.qLB) - (sum(w.qLB)-qLB)
+    }
+    s.qLB <- qLB - w.qLB[1] -w.qLB[2]
+    print(s.qLB + sum(w.qLB))
+}
 ```
 
 
