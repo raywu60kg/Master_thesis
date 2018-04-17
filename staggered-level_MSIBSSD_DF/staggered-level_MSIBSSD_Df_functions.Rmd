@@ -1,21 +1,21 @@
 ---
-title: "staggered-level_MSIBSSD_BayesianD_functions"
+title: "staggered-level_MSIBSSD_Df_functions"
 output: html_document
 ---
 ```{r}
-Dcriterion_staggered <- function(mSSD, U2, f = f, b1 = b1, n2 = n2){
-  index.matrix <- combn(ncol(mSSD), f)
+Dcriterion_staggered <- function(MSSD, U2, f = f, b1 = b1, n1 = n1, n2 = n2){
+  index.matrix <- combn(ncol(MSSD), f)
   library(Matrix)   
   U1 <- kronecker(diag(b1),matrix(1,n2,1))
   S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2)) # 1 is from paper
   
   Df <- 0
   for(i in 1:ncol(index.matrix)){
-    Xf <- cbind(1, mSSD[ ,index.matrix[,i]])
+    Xf <- cbind(1, MSSD[ ,index.matrix[,i]])
     #Df <- Df + det(t(Xf) %*% solve(S) %*% Xf)^(1/(f+1))
     Df <- Df + round(det(t(Xf) %*% solve(S) %*% Xf),6)^(1/(f+1))
   }
-  return(Df / choose(ncol(mSSD), f))
+  return(Df / choose(ncol(MSSD), f))
 }
 ```
 
@@ -112,7 +112,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       for(j in 1:w.qLB[1]){
         lack.value <- numeric(tem.m1)
         for(k in 1:tem.m1){
-          lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)  
+          lack.value[k] <- Dcriterion_staggered(MSSD = tem[ ,-k], f = 2, U2 = U2, b1 = b1, n2 = n2)  
         }  
         tem <- tem[,-which.max(lack.value)] 
         tem.m1 <- tem.m1 - 1 
@@ -124,7 +124,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       for(j in 1:w.qLB[2]){
         lack.value <- numeric(tem.m2)
         for(k in 1:tem.m2){
-          lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-(tem.m1 + k)],U2 = U2, b1 = b1,n2 = n2)  
+          lack.value[k] <- Dcriterion_staggered(MSSD = tem[ ,-(tem.m1 + k)], f = 2,U2 = U2, b1 = b1, n2 = n2)  
         }  
         tem <- tem[,-(tem.m1 + which.max(lack.value))] 
         tem.m2 <- tem.m2 - 1 
@@ -136,7 +136,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       for(j in 1:s.qLB){
         lack.value <- numeric(tem.m3)
         for(k in 1:tem.m3){
-          lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-(tem.m1 + tem.m2 + k)],U2 = U2, b1 = b1,n2 = n2)  
+          lack.value[k] <- Dcriterion_staggered(MSSD = tem[ ,-(tem.m1 + tem.m2 + k)], f = 2, U2 = U2, b1 = b1, n2 = n2)  
         }  
         tem <- tem[,-(tem.m1 + tem.m2 + which.max(lack.value))] 
         tem.m3 <- tem.m3 - 1 
@@ -154,7 +154,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
         add.value <- numeric(m1)   
         for(k in 1:m1){
           
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem),U2 = U2, b1 = b1,n2 = n2)
+          add.value[k] <- Dcriterion_staggered(MSSD = cbind(add.matrix[ ,k], tem),f = 1, U2 = U2, b1 = b1, n2 = n2)
         }
         tem <- cbind(add.matrix[,which.max(add.value)], tem)
         
@@ -167,7 +167,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
         add.value <- numeric(m2)   
         for(k in 1:m2){
           
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
+          add.value[k] <- Dcriterion_staggered(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]), f = 2 , U2 = U2, b1 = b1, n2 = n2)
         }
         tem <- cbind(tem[,1:m1], add.matrix[,m1 + which.max(add.value)], tem[,(m1+1) :ncol(tem)])
         
@@ -180,14 +180,14 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
         add.value <- numeric(m3)   
         for(k in 1:m3){
           
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]),U2 = U2, b1 = b1,n2 = n2)
+          add.value[k] <- Dcriterion_staggered(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]), f = 2 ,U2 = U2, b1 = b1, n2 = n2)
         }
         tem <- cbind(tem,add.matrix[,m1 + m2 + which.max(add.value)])
       }
     }
   
     ###
-    mixwLB[[i]] <- list(design = tem,value = evaluateMBayesianD(MSSD = tem,U2 = U2,b1 = b1,n2 = n2))  #important value
+    mixwLB[[i]] <- list(design = tem,value = Dcriterion_staggered(MSSD = tem, f = 2, U2 = U2, b1 = b1, n2 = n2))  #important value
     ###
     
     ###mixwGB###
@@ -216,7 +216,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       for(j in 1:w.qGB[1]){
         lack.value <- numeric(tem.m1)
         for(k in 1:tem.m1){
-          lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)  
+          lack.value[k] <- Dcriterion_staggered(MSSD = tem[ ,-k], f = 2, U2 = U2, b1 = b1, n2 = n2)  
         }  
         tem <- tem[,-which.max(lack.value)] 
         tem.m1 <- tem.m1 - 1 
@@ -229,7 +229,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       for(j in 1:w.qGB[2]){
         lack.value <- numeric(tem.m2)
         for(k in 1:tem.m2){
-          lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-(tem.m1 + k)],U2 = U2, b1 = b1,n2 = n2)  
+          lack.value[k] <- Dcriterion_staggered(MSSD = tem[ ,-(tem.m1 + k)], f = 2, U2 = U2, b1 = b1, n2 = n2)  
         }  
         tem <- tem[,-(tem.m1 + which.max(lack.value))] 
         tem.m2 <- tem.m2 - 1 
@@ -241,7 +241,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       for(j in 1:s.qGB){
         lack.value <- numeric(tem.m3)
         for(k in 1:tem.m3){
-          lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-(tem.m1 + tem.m2 + k)],U2 = U2, b1 = b1,n2 = n2)  
+          lack.value[k] <- Dcriterion_staggered(MSSD = tem[ ,-(tem.m1 + tem.m2 + k)], f = 2, U2 = U2, b1 = b1, n2 = n2)  
         }  
         tem <- tem[,-(tem.m1 + tem.m2 + which.max(lack.value))] 
         tem.m3 <- tem.m3 - 1 
@@ -259,7 +259,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
         add.value <- numeric(m1)   
         for(k in 1:m1){
           
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem),U2 = U2, b1 = b1,n2 = n2)
+          add.value[k] <- Dcriterion_staggered(MSSD = cbind(add.matrix[ ,k], tem), f = 2, U2 = U2, b1 = b1, n2 = n2)
         }
         tem <- cbind(add.matrix[,which.max(add.value)], tem)
       }
@@ -272,7 +272,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
         add.value <- numeric(m2)   
         for(k in 1:m2){
           
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
+          add.value[k] <- Dcriterion_staggered(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]), f = 2, U2 = U2, b1 = b1, n2 = n2)
         }
         tem <- cbind(tem[,1:m1], add.matrix[,m1 + which.max(add.value)], tem[,(m1+1) :ncol(tem)])
         
@@ -285,14 +285,14 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
         add.value <- numeric(m3)   
         for(k in 1:m3){
           
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]),U2 = U2, b1 = b1,n2 = n2)
+          add.value[k] <- Dcriterion_staggered(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]), f = 2, U2 = U2, b1 = b1, n2 = n2)
         }
         tem <- cbind(tem,add.matrix[,m1 + m2 + which.max(add.value)])
       }
     }
    
     ###
-    mixwGB[[i]] <- list(design = tem,value = evaluateMBayesianD(MSSD = tem, U2 = U2, b1 = b1,n2 = n2))  #important value    
+    mixwGB[[i]] <- list(design = tem,value = Dcriterion_staggered(MSSD = tem, f = 2, U2 = U2, b1 = b1, n2 = n2))  #important value    
     ###
   
     
@@ -308,10 +308,10 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
 moveOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio = w.ratio, mixwLB, mixwGB, qLB, qGB){
   for(i in 1:particle){
     
-    if(mixwGB[[i]]$value > mixwLB[[i]]$value && mixwGB[[i]]$value > evaluateMBayesianD(MSSD = mSIBSSD.list[[i]],U2 = U2, b1 = b1,n2 = n2)){
+    if(mixwGB[[i]]$value > mixwLB[[i]]$value && mixwGB[[i]]$value > Dcriterion_staggered(MSSD = mSIBSSD.list[[i]], f = 2, U2 = U2, b1 = b1, n2 = n2)){
       mSIBSSD.list[[i]] <- mixwGB[[i]]$design 
       
-    }else if(mixwLB[[i]]$value > mixwGB[[i]]$value && mixwLB[[i]]$value > evaluateMBayesianD(MSSD = mSIBSSD.list[[i]],U2 = U2, b1 = b1,n2 = n2)){
+    }else if(mixwLB[[i]]$value > mixwGB[[i]]$value && mixwLB[[i]]$value > Dcriterion_staggered(MSSD = mSIBSSD.list[[i]], f = 2, U2 = U2, b1 = b1, n2 = n2)){
       mSIBSSD.list[[i]] <- mixwLB[[i]]$design  
       
     }else{
@@ -354,5 +354,3 @@ moveOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.rati
   return(mSIBSSD.list)
 }
 ```
-
-

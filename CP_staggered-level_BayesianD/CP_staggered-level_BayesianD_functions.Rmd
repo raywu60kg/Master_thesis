@@ -115,6 +115,95 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
 ```
 
 ```{r}
+#radom
+deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
+  #k is number of delete columns
+  tem.m1 <- m1
+  tem.m2 <- m2
+  tem.m3 <- m3
+  delete.column.m1 <- c()
+  delete.column.m2 <- c()
+  delete.column.m3 <- c()
+  #radom
+  y <- 0
+  while(y == 0){
+    replace.w <- rbinom(n = 2, size = k, prob = 0.1)
+    if(sum(replace.w) <= k){
+      y <- 1  
+    }
+  }
+  replace.s <- k - replace.w[1] - replace.w[2]
+  
+  #w1
+  if(replace.w[1] != 0){
+    for(i in 1:replace.w[1]){
+      delete.value <- numeric(tem.m1) 
+      for(j in 1:ncol(design)){
+        delete.value[j] <- evaluateMBayesianD(MSSD = design[,-j], U2 = U2, b1 =b1, n2 = n2)  
+      }
+      delete.column.m1 <- cbind(delete.column.m1, design[,which.max(delete.value)])
+      design <- design[,-which.max(delete.value)]
+      tem.m1 <- tem.m1 - 1
+    }
+  }
+  
+  #w2
+  if(replace.w[2] != 0){
+    for(i in 1:replace.w[2]){
+      delete.value <- numeric(tem.m2) 
+      for(j in 1:ncol(design)){
+        delete.value[j] <- evaluateMBayesianD(MSSD = design[,-(tem.m1+j)], U2 = U2, b1 =b1, n2 = n2)  
+      }
+      delete.column.m2 <- cbind(delete.column.m2, design[,which.max(delete.value)])
+      design <- design[,-(tem.m1+which.max(delete.value))] 
+      tem.m2 <- tem.m2 - 1
+    }
+  }
+  
+  #s
+  if(replace.s != 0){
+    for(i in 1:replace.s){
+      delete.value <- numeric(tem.m3) 
+      for(j in 1:ncol(design)){
+        delete.value[j] <- evaluateMBayesianD(MSSD = design[,-(tem.m1+tem.m2+j)], U2 = U2, b1 =b1, n2 = n2)  
+      }
+      delete.column.m3 <- cbind(delete.column.m3, design[,which.max(delete.value)])
+      design <- design[,-(tem.m1+tem.m2+which.max(delete.value))] 
+      tem.m3 <- tem.m3 - 1
+    }
+  }
+  
+  
+  for(i in 1:k){
+    delete.value <- numeric(ncol(design))
+    
+    for(j in 1:ncol(design)){
+
+      delete.value[j] <- evaluateMBayesianD(MSSD = design[,-j], U2 = U2, b1 =b1, n2 = n2)  
+    }
+    if(which.max(delete.value) <= tem.m1){
+      delete.column.m1 <- cbind(delete.column.m1, design[,which.max(delete.value)])
+      tem.m1 <- tem.m1 - 1
+    }else if(which.max(delete.value) > tem.m1 + tem.m2){
+      delete.column.m3 <- cbind(delete.column.m3, design[,which.max(delete.value)])
+      tem.m3 <- tem.m3 - 1
+    }else{
+      delete.column.m2 <- cbind(delete.column.m2, design[,which.max(delete.value)])
+      tem.m2 <- tem.m2 -1
+    }
+    design <- design[,-which.max(delete.value)]
+  }
+  
+  number.remain.column <- c(tem.m1, tem.m2, tem.m3)
+  return(list(design = design,
+              number.remain.column = number.remain.column,
+              delete.column.m1 = delete.column.m1,
+              delete.column.m2 = delete.column.m2,
+              delete.column.m3 = delete.column.m3))
+}
+```
+
+```{r}
 adjustOperation <- function(column.m1, column.m2, column.m3, b1, n2){
   column <- list(column.m1 = column.m1,
                  column.m2 = column.m2,

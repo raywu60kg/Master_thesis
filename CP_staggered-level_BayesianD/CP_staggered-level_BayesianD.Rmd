@@ -117,6 +117,7 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
     tryCatch({
       if(added.design$value > best.design$value){
         best.design <- added.design
+        print(paste("iteration:",i))
         print(best.design)
         
       }
@@ -145,7 +146,7 @@ n <- 24
 n2 <- 4
 starting.design <- 100000
 #k <- round(m/3)
-k=6
+k=5
 result <- CP_staggered_level_BayesianD(starting.design = starting.design,
                                        U2 = U2,
                                        m1 = m1,

@@ -1,16 +1,7 @@
 ---
-title: "staggered-level_MSIBSSD_BayesianD"
+title: "strip-plot_MSIBSSD_Df"
 output: html_document
 ---
-#Notation
-m1 class-1 whole-plot factors,
-m2 class-2 whole-plot factors,
-m3 subplot factors,
-b1 is the number of class-1 whole plots,
-b2 = b1+1 is the number of class-2 whole plots,
-b3 is the number of subplots,
-n2 is the size of each class-1 whole plot,
-n = b1*n2 = b3.
 ```{r}
 source_rmd <- function(file, local = FALSE, ...){
   options(knitr.duplicate.label = 'allow')
@@ -24,7 +15,7 @@ source_rmd <- function(file, local = FALSE, ...){
 }
 
 Sys.setlocale('LC_ALL','C')
-source_rmd("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/staggered-level_MSIBSSD_BayesianD_functions.Rmd")
+source_rmd("D:/statisic/Master_thesis/staggered-level_MSIBSSD_Df/staggered-level_MSIBSSD_Df_functions.Rmd")
 ```
 
 ```{r}
@@ -43,15 +34,18 @@ U2[1:(n2/2),1] <- 1
 U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
 U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
 
-table8 <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/table8.csv",header = F))
+table8 <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_Df/table8.csv",header = F))
 ```
 
 # Df values
 ```{r}
-Dcriterion_staggered(mSSD = table8, U2 = U2, f = 2, b1 = b1, n2 = n2)
-Dcriterion_staggered(mSSD = table8, U2 = U2, f = 3, b1 = b1, n2 = n2)
-Dcriterion_staggered(mSSD = table8, U2 = U2, f = 4, b1 = b1, n2 = n2)
-Dcriterion_staggered(mSSD = table8, U2 = U2, f = 5, b1 = b1, n2 = n2)
+library(tictoc)
+tic()
+Dcriterion_staggered(MSSD = table8, U2 = U2, f = 2, b1 = b1, n2 = n2)
+Dcriterion_staggered(MSSD = table8, U2 = U2, f = 3, b1 = b1, n2 = n2)
+Dcriterion_staggered(MSSD = table8, U2 = U2, f = 4, b1 = b1, n2 = n2)
+Dcriterion_staggered(MSSD = table8, U2 = U2, f = 5, b1 = b1, n2 = n2)
+toc()
 ```
 
 # Bayesian D value
@@ -59,8 +53,9 @@ Dcriterion_staggered(mSSD = table8, U2 = U2, f = 5, b1 = b1, n2 = n2)
 evaluateMBayesianD(MSSD = table8, U2 = U2, b1 =b1, n2 = n2)
 ```
 
+# main function
 ```{r}
-staggered_level_MSIBSSD_BayesianD <- function(particle,U2, m1, m2, m3, b1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
+staggered_level_MSIBSSD_Df <- function(particle,U2, m1, m2, m3, b1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
   
   #1: Randomly generate a set of balanced N*m SSDs as initial particles
   mSIBSSD.list <- list()
@@ -71,7 +66,7 @@ staggered_level_MSIBSSD_BayesianD <- function(particle,U2, m1, m2, m3, b1, n2, q
   #2: Evaluate objective function value of each SSD
   BayesianD.value <- numeric(particle)
   for(j in 1:particle){
-    BayesianD.value[j] <- evaluateMBayesianD(MSSD = mSIBSSD.list[[j]], U2 = U2, b1 = b1, n2 = n2)  
+    BayesianD.value[j] <- Dcriterion_staggered(MSSD = mSIBSSD.list[[j]], f = 2, U2 = U2, b1 = b1, n2 = n2)  
   }
   
   #3: Initialize the LB for all SSDs
@@ -140,7 +135,7 @@ staggered_level_MSIBSSD_BayesianD <- function(particle,U2, m1, m2, m3, b1, n2, q
     #9: Update the LB for all SSDs
     BayesianD.value <- numeric(particle)
     for(j in 1:particle){
-      BayesianD.value[j] <- evaluateMBayesianD(MSSD = mSIBSSD.list[[j]], U2 = U2, b1 = b1, n2 = n2)  
+      BayesianD.value[j] <- Dcriterion_staggered(MSSD = mSIBSSD.list[[j]],f = 2, U2 = U2, b1 = b1, n2 = n2)  
     }
 
     for(j in 1:particle){
@@ -163,6 +158,15 @@ staggered_level_MSIBSSD_BayesianD <- function(particle,U2, m1, m2, m3, b1, n2, q
 }
 ```
 
+# speed up
+```{r}
+library(compiler)
+Dcriterion_staggered <- cmpfun(Dcriterion_staggered)
+generateSLD <- cmpfun(generateSLD)
+mixOperation <- cmpfun(mixOperation)
+moveOperation <- cmpfun(moveOperation)
+staggered_level_MSIBSSD_Df <- cmpfun(staggered_level_MSIBSSD_Df)
+```
 ###start###
 #test
 ```{r}
@@ -174,11 +178,11 @@ b2 <- 7
 b3 <- 24
 n <- 24
 n2 <- 4
-qLB <- round((m1+m2+m3)/3)
-qGB <- round((m1+m2+m3)/6)
+qLB <- floor((m1+m2+m3)/3)
+qGB <- floor((m1+m2+m3)/6)
 
 w.ratio = 0.5
-test <- staggered_level_MSIBSSD_BayesianD(particle = 15,
+test <- staggered_level_MSIBSSD_Df(particle = 15,
                                           U2 = U2, 
                                           m1 = m1, 
                                           m2 = m2, 
@@ -190,95 +194,22 @@ test <- staggered_level_MSIBSSD_BayesianD(particle = 15,
                                           w.ratio = w.ratio, 
                                           iteration = 5, 
                                           early.break = 100)
-Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design, U2 = U2, b1 = b1, n2 = n2)
 ```
+```{r}
+test <- staggered_level_MSIBSSD_Df(particle = 500,
+                                   U2 = U2, 
+                                   m1 = m1, 
+                                   m2 = m2, 
+                                   m3 = m3, 
+                                   b1 = b1, 
+                                   n2 = n2, 
+                                   qLB = qLB, 
+                                   qGB = qGB, 
+                                   w.ratio = w.ratio, 
+                                   iteration = 500, 
+                                   early.break = 100)
 
-```{r}
-m1 <- 7
-m2 <- 7
-m3 <- 8
-b1 <- 6
-b2 <- 7
-b3 <- 24
-n <- 24
-n2 <- 4
-qLB <- floor((m1+m2+m3)/4)
-qGB <- floor((m1+m2+m3)/6)
-
-w.ratio = 0.2
-test <- staggered_level_MSIBSSD_BayesianD(particle = 500,
-                                          U2 = U2, 
-                                          m1 = m1, 
-                                          m2 = m2, 
-                                          m3 = m3, 
-                                          b1 = b1, 
-                                          n2 = n2, 
-                                          qLB = qLB, 
-                                          qGB = qGB, 
-                                          w.ratio = w.ratio, 
-                                          iteration = 500, 
-                                          early.break = 1000)
-#Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
-```
-```{r}
-test
-Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
-```
-
-```{r}
-write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
-```
-```{r}
-for(i in 1:100000){
-    w.qGB <- rbinom(n = 2, size = qGB, prob =0.5)
-    if(w.qGB[1] > m1 -1){
-      w.qGB[1] <- m1 -1  
-    }else if(w.qGB[2] > m2 -1){
-      w.qGB[2] <- m2 -1
-    }else if(sum(w.qGB) > qGB){
-      w.qGB[which.max(w.qGB)] <- max(w.qGB) - (sum(w.qGB)-qGB)
-    }
-    s.qGB <- qGB - w.qGB[1] - w.qGB[2]
-    print(w.qGB[1])
-    print(w.qGB[2])
-    print(s.qGB)
-      if(w.qLB[1] != 0){
-        w1.replace.index <- sample(m1,size = w.qLB[1])
-       # mSIBSSD.list[[i]][,w1.replace.index] <- replace.matrix[,w1.replace.index]  
-      }
-          #wholeplot2
-      if(w.qLB[2] != 0){
-        w2.replace.index <- sample(m2,size = w.qLB[2])
-        #mSIBSSD.list[[i]][,m1+w2.replace.index] <- replace.matrix[,m1+w2.replace.index]  
-      }
-          #subplot
-      if(s.qLB != 0){
-        s.replace.index <- sample(m3,size = s.qLB)
-        #mSIBSSD.list[[i]][,m1+m2+s.replace.index] <- replace.matrix[,m1+m2+s.replace.index]  
-      }
-}
-```
-```{r}
-for(i in 1:10000){
-    w.qLB <- rbinom(n = 2, size = qLB, prob = 0.5)
-    if(w.qLB[1] > m1-1){
-      w.qLB[1] <- m1 - 1 
-    }else if(w.qLB[2] > m2-1){
-      w.qLB[2] <- m2 - 1
-    }else if(sum(w.qLB) > qLB){
-      w.qLB[which.max(w.qLB)] <- max(w.qLB) - (sum(w.qLB)-qLB)
-    }
-    s.qLB <- qLB - w.qLB[1] -w.qLB[2]
-    print(s.qLB + sum(w.qLB))
-}
-```
-
-```{r}
-evaluateMBayesianD(MSSD =test1,U2 = U2, b1 = b1,n2 = n2)
-evaluateMBayesianD(MSSD =test2,U2 = U2, b1 = b1,n2 = n2)
-evaluateMBayesianD(MSSD =test1[,-1],U2 = U2, b1 = b1,n2 = n2)
-evaluateMBayesianD(MSSD =test2[,-1],U2 = U2, b1 = b1,n2 = n2)
-evaluateMBayesianD(MSSD =test1[,-2],U2 = U2, b1 = b1,n2 = n2)
-evaluateMBayesianD(MSSD =test2[,-2],U2 = U2, b1 = b1,n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design, U2 = U2, b1 = b1, n2 = n2)
 ```
 
