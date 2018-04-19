@@ -178,7 +178,7 @@ b2 <- 7
 b3 <- 24
 n <- 24
 n2 <- 4
-qLB <- floor((m1+m2+m3)/3)
+qLB <- floor((m1+m2+m3)/4)
 qGB <- floor((m1+m2+m3)/6)
 
 w.ratio = 0.5

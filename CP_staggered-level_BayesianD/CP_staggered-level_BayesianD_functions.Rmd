@@ -86,7 +86,7 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
   tem.m3 <- m3
   delete.column.m1 <- c()
   delete.column.m2 <- c()
-  delete.column.m3 <- c()
+  delete.coforlumn.m3 <- c()
   for(i in 1:k){
     delete.value <- numeric(ncol(design))
     for(j in 1:ncol(design)){
