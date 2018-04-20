@@ -86,7 +86,7 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
   tem.m3 <- m3
   delete.column.m1 <- c()
   delete.column.m2 <- c()
-  delete.coforlumn.m3 <- c()
+  delete.column.m3 <- c()
   for(i in 1:k){
     delete.value <- numeric(ncol(design))
     for(j in 1:ncol(design)){
@@ -106,6 +106,7 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
   }
   
   number.remain.column <- c(tem.m1, tem.m2, tem.m3)
+  print(number.remain.column)
   return(list(design = design,
               number.remain.column = number.remain.column,
               delete.column.m1 = delete.column.m1,
@@ -133,12 +134,12 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
     }
   }
   replace.s <- k - replace.w[1] - replace.w[2]
-  
+  #print(c(replace.w,replace.s))
   #w1
   if(replace.w[1] != 0){
     for(i in 1:replace.w[1]){
       delete.value <- numeric(tem.m1) 
-      for(j in 1:ncol(design)){
+      for(j in 1:tem.m1){
         delete.value[j] <- evaluateMBayesianD(MSSD = design[,-j], U2 = U2, b1 =b1, n2 = n2)  
       }
       delete.column.m1 <- cbind(delete.column.m1, design[,which.max(delete.value)])
@@ -151,7 +152,7 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
   if(replace.w[2] != 0){
     for(i in 1:replace.w[2]){
       delete.value <- numeric(tem.m2) 
-      for(j in 1:ncol(design)){
+      for(j in 1:tem.m2){
         delete.value[j] <- evaluateMBayesianD(MSSD = design[,-(tem.m1+j)], U2 = U2, b1 =b1, n2 = n2)  
       }
       delete.column.m2 <- cbind(delete.column.m2, design[,which.max(delete.value)])
@@ -164,37 +165,40 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
   if(replace.s != 0){
     for(i in 1:replace.s){
       delete.value <- numeric(tem.m3) 
-      for(j in 1:ncol(design)){
+      for(j in 1:tem.m3){
         delete.value[j] <- evaluateMBayesianD(MSSD = design[,-(tem.m1+tem.m2+j)], U2 = U2, b1 =b1, n2 = n2)  
       }
       delete.column.m3 <- cbind(delete.column.m3, design[,which.max(delete.value)])
+      #print(delete.value)
+      #print(tem.m1+tem.m2+which.max(delete.value))
       design <- design[,-(tem.m1+tem.m2+which.max(delete.value))] 
       tem.m3 <- tem.m3 - 1
     }
   }
   
   
-  for(i in 1:k){
-    delete.value <- numeric(ncol(design))
-    
-    for(j in 1:ncol(design)){
-
-      delete.value[j] <- evaluateMBayesianD(MSSD = design[,-j], U2 = U2, b1 =b1, n2 = n2)  
-    }
-    if(which.max(delete.value) <= tem.m1){
-      delete.column.m1 <- cbind(delete.column.m1, design[,which.max(delete.value)])
-      tem.m1 <- tem.m1 - 1
-    }else if(which.max(delete.value) > tem.m1 + tem.m2){
-      delete.column.m3 <- cbind(delete.column.m3, design[,which.max(delete.value)])
-      tem.m3 <- tem.m3 - 1
-    }else{
-      delete.column.m2 <- cbind(delete.column.m2, design[,which.max(delete.value)])
-      tem.m2 <- tem.m2 -1
-    }
-    design <- design[,-which.max(delete.value)]
-  }
-  
+  # for(i in 1:k){
+  #   delete.value <- numeric(ncol(design))
+  #   
+  #   for(j in 1:ncol(design)){
+  # 
+  #     delete.value[j] <- evaluateMBayesianD(MSSD = design[,-j], U2 = U2, b1 =b1, n2 = n2)  
+  #   }
+  #   if(which.max(delete.value) <= tem.m1){
+  #     delete.column.m1 <- cbind(delete.column.m1, design[,which.max(delete.value)])
+  #     tem.m1 <- tem.m1 - 1
+  #   }else if(which.max(delete.value) > tem.m1 + tem.m2){
+  #     delete.column.m3 <- cbind(delete.column.m3, design[,which.max(delete.value)])
+  #     tem.m3 <- tem.m3 - 1
+  #   }else{
+  #     delete.column.m2 <- cbind(delete.column.m2, design[,which.max(delete.value)])
+  #     tem.m2 <- tem.m2 -1
+  #   }
+  #   design <- design[,-which.max(delete.value)]
+  # }
+  # 
   number.remain.column <- c(tem.m1, tem.m2, tem.m3)
+  #print(ncol(design))
   return(list(design = design,
               number.remain.column = number.remain.column,
               delete.column.m1 = delete.column.m1,

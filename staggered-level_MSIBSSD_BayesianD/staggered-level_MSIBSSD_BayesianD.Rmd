@@ -202,11 +202,11 @@ b2 <- 7
 b3 <- 24
 n <- 24
 n2 <- 4
-qLB <- floor((m1+m2+m3)/3)
+qLB <- floor((m1+m2+m3)/4)
 qGB <- floor((m1+m2+m3)/6)
 
 w.ratio = 0.1
-test <- staggered_level_MSIBSSD_BayesianD(particle = 500,
+test <- staggered_level_MSIBSSD_BayesianD(particle = 10,
                                           U2 = U2, 
                                           m1 = m1, 
                                           m2 = m2, 
@@ -216,7 +216,7 @@ test <- staggered_level_MSIBSSD_BayesianD(particle = 500,
                                           qLB = qLB, 
                                           qGB = qGB, 
                                           w.ratio = w.ratio, 
-                                          iteration = 500, 
+                                          iteration = 10, 
                                           early.break = 1000)
 #Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 ```

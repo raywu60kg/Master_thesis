@@ -109,6 +109,7 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
       if(added.design$value > BayesianD.value){
         BayesianD.value <- added.design$value 
         tem.design <- added.design$design
+        #print(i)
       }else{
         progress <- 1    
       }
