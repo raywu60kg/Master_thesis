@@ -162,6 +162,10 @@ staggered_level_MSIBSSD_BayesianD <- function(particle,U2, m1, m2, m3, b1, n2, q
   return(list(GB,record))  
 }
 ```
+```{r}
+record.GB <- c()
+record.LB <- c()
+```
 
 ###start###
 #test
@@ -174,7 +178,7 @@ b2 <- 7
 b3 <- 24
 n <- 24
 n2 <- 4
-qLB <- round((m1+m2+m3)/3)
+qLB <- round((m1+m2+m3)/4)
 qGB <- round((m1+m2+m3)/6)
 
 w.ratio = 0.5
@@ -194,6 +198,8 @@ Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 ```
 
 ```{r}
+library(tictoc)
+tic()
 m1 <- 7
 m2 <- 7
 m3 <- 8
@@ -202,11 +208,11 @@ b2 <- 7
 b3 <- 24
 n <- 24
 n2 <- 4
-qLB <- floor((m1+m2+m3)/4)
+qLB <- floor((m1+m2+m3)/3)
 qGB <- floor((m1+m2+m3)/6)
 
 w.ratio = 0.1
-test <- staggered_level_MSIBSSD_BayesianD(particle = 10,
+test <- staggered_level_MSIBSSD_BayesianD(particle = 500,
                                           U2 = U2, 
                                           m1 = m1, 
                                           m2 = m2, 
@@ -216,9 +222,10 @@ test <- staggered_level_MSIBSSD_BayesianD(particle = 10,
                                           qLB = qLB, 
                                           qGB = qGB, 
                                           w.ratio = w.ratio, 
-                                          iteration = 10, 
-                                          early.break = 1000)
+                                          iteration = 500, 
+                                          early.break = 500)
 #Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
+toc()
 ```
 ```{r}
 test
@@ -226,10 +233,19 @@ Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 ```
 
 ```{r}
-write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
+write.csv(test[[1]]$design,"design_notradom.csv",row.names = F, col.names = F)
 ```
 ```{r}
-write.csv(test[[2]],"record.csv",row.names = F, col.names = F)
+write.csv(test[[2]],"record_notradom.csv",row.names = F, col.names = F)
+```
+
+```{r}
+write.csv(record.GB,"record_GB.csv",row.names = F, col.names = F)
+```
+
+
+```{r}
+write.csv(record.LB,"record_LB.csv",row.names = F, col.names = F)
 ```
 
 

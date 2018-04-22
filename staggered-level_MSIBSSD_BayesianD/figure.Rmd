@@ -1,0 +1,98 @@
+---
+title: "figure"
+output: html_document
+---
+```{r}
+record <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/record.csv",header = T))
+record_nonrandom <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/record_nonrandom.csv",header = T))
+```
+
+```{r}
+head(record)
+colnames(record) <- "Bayesian_D_value"
+record <- as.data.frame(record)
+record$iteration <- c(1:nrow(record))
+record$type <- rep("random",nrow(record))
+```
+
+```{r}
+head(record_nonrandom)
+colnames(record_nonrandom) <- "Bayesian_D_value"
+record_nonrandom <- as.data.frame(record_nonrandom)
+record_nonrandom$iteration <- c(1:nrow(record_nonrandom))
+record_nonrandom$type <- rep("nonrandom",nrow(record_nonrandom))
+```
+
+```{r}
+record_all <- rbind(record,record_nonrandom)
+```
+
+
+```{r}
+ggplot(record_all, aes(x=iteration, y=Bayesian_D_value, color=type)) + 
+  geom_point(size=1, alpha=0.6) + 
+  ggtitle("random vs nonrandom")
+```
+
+```{r}
+png(filename = "random_vs_nonrandom.png")
+ggplot(record_all, aes(x=iteration, y=Bayesian_D_value, color=type)) + 
+  geom_point(size=1, alpha=0.6) + 
+  ggtitle("Random vs Nonrandom")
+dev.off()
+```
+
+```{r}
+record_GB <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/record_GB.csv",header = T))
+record_LB <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/record_LB.csv",header = T))
+```
+
+```{r}
+mean_GB <- round(c(7,7,8)-colMeans(record_GB),5)
+mean_LB <- round(c(7,7,8)-colMeans(record_LB),5)
+```
+
+
+```{r}
+library(scales) 
+# Create data
+data_GB <- data.frame(factor_type=c("whole-plot 1","whole-plot 2","sup-plot"),  times=mean_GB)
+data_GB$factor_type <- factor(data_GB$factor_type, levels = c("whole-plot 1","whole-plot 2","sup-plot"))
+# Barplot
+ggplot(data_GB, aes(x=factor_type, y=times, fill = factor_type)) + 
+  geom_bar(stat = "identity", width = 0.5) +  
+  scale_y_sqrt() + 
+  geom_text(aes(label = times, vjust = -0.2, hjust = 0.5, color = factor_type)) +
+  ggtitle("Average GB deleted columns")
+```
+```{r}
+library(scales) 
+# Create data
+data_LB <- data.frame(factor_type=c("whole-plot 1","whole-plot 2","sup-plot"),  times=mean_LB)
+data_LB$factor_type <- factor(data_LB$factor_type, levels = c("whole-plot 1","whole-plot 2","sup-plot"))
+# Barplot
+ggplot(data_LB, aes(x=factor_type, y=times, fill = factor_type)) + 
+  geom_bar(stat = "identity", width = 0.5) +  
+  scale_y_sqrt() + 
+  geom_text(aes(label = times, vjust = -0.2, hjust = 0.5, color = factor_type)) +
+  ggtitle("Average LB deleted columns")
+```
+```{r}
+png(filename = "GB.png")
+ggplot(data_GB, aes(x=factor_type, y=times, fill = factor_type)) + 
+  geom_bar(stat = "identity", width = 0.5) +  
+  scale_y_sqrt() + 
+  geom_text(aes(label = times, vjust = -0.2, hjust = 0.5, color = factor_type)) +
+  ggtitle("Average GB deleted columns")
+dev.off()
+```
+```{r}
+png(filename = "LB.png")
+ggplot(data_LB, aes(x=factor_type, y=times, fill = factor_type)) + 
+  geom_bar(stat = "identity", width = 0.5) +  
+  scale_y_sqrt() + 
+  geom_text(aes(label = times, vjust = -0.2, hjust = 0.5, color = factor_type)) +
+  ggtitle("Average LB deleted columns")
+dev.off()
+```
+

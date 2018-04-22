@@ -106,14 +106,14 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
     # if(sum(w.qLB) > qLB){
     #   w.qLB[which.max(w.qLB)] <- max(w.qLB) - (sum(w.qLB)-qLB)
     # }
-    # s.qLB <- qLB - w.qLB[1] -w.qLB[2]
-    
+    y <- 0
     while(y == 0){
-      w.qLB <- rbinom(n = 2, size = qLB, prob = w.ratio)
-      if(w.qLB[1] < m1 -1 && w.qLB[2] < m2-1 && sum(w.qLB) <= qLB){
+      w.qLB <- rbinom(n = 2, size = qLB, prob = w.ratio) 
+      if(w.qLB[1] <= m1-1 && w.qLB[2] <= m2-1 && sum(w.qLB) <= qLB){
         y <- 1
       }
     }
+    s.qLB <- qLB - w.qLB[1] -w.qLB[2]
     
     #wholeplot1
     if(w.qLB[1] != 0){
@@ -216,15 +216,15 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
     # if(sum(w.qGB) > qGB){
     #   w.qGB[which.max(w.qGB)] <- max(w.qGB) - (sum(w.qGB)-qGB)
     # }
-    # s.qGB <- qGB - w.qGB[1] - w.qGB[2]
-    
     y <- 0
     while(y == 0){
-      w.qGB <- rbinom(n = 2, size = qGB, prob = w.ratio)
-      if(w.qGB[1] <= m1 -1 && w.qGB[2] <= m2-1 && sum(w.qGB) <= qGB){
+      w.qGB <- rbinom(n = 2, size = qGB, prob = w.ratio) 
+      if(w.qGB[1] <= m1-1 && w.qGB[2] <= m2-1 && sum(w.qGB) <= qGB){
         y <- 1
       }
     }
+    s.qGB <- qGB - w.qGB[1] - w.qGB[2]
+    
     
     #wholeplot1
     if(w.qGB[1] != 0){
@@ -336,7 +336,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
     for(j in 1:qLB){
       lack.value <- numeric(ncol(tem))
       for(k in 1:ncol(tem)){
-        lack.value <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
+        lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
       }
       if(which.max(lack.value) <= tem.m1){
         tem.m1 <- tem.m1 - 1
@@ -345,10 +345,11 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       }else{
         tem.m2 <- tem.m2 -1
       }
-      design <- design[,-which.max(delete.value)]
+      tem <- tem[,-which.max(lack.value)]
     }
     
-
+    ## test
+    record.LB <<- rbind(record.LB,c(tem.m1,tem.m2,tem.m3))
    
     
     #column addition step
@@ -409,7 +410,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
     for(j in 1:qGB){
       lack.value <- numeric(ncol(tem))
       for(k in 1:ncol(tem)){
-        lack.value <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
+        lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
       }
       if(which.max(lack.value) <= tem.m1){
         tem.m1 <- tem.m1 - 1
@@ -418,9 +419,10 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
       }else{
         tem.m2 <- tem.m2 -1
       }
-      design <- design[,-which.max(delete.value)]
+      tem <- tem[,-which.max(lack.value)]
     }
-
+    ## test
+    record.GB <<- rbind(record.GB,c(tem.m1,tem.m2,tem.m3))
     
     #column addition step
     add.matrix <- GB$design
@@ -471,7 +473,7 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
   
     
     
-    #column addition step
+ 
   }
   return(list(mixwLB = mixwLB, mixwGB = mixwGB))
   
@@ -490,23 +492,29 @@ moveOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.rati
       mSIBSSD.list[[i]] <- mixwLB[[i]]$design  
       
     }else{
-      #radom
-      w.qLB <- rbinom(n = 2, size = qLB, prob = w.ratio)
-      if(w.qLB[1] > m1 -1){
-        w.qLB[1] <- m1 -1  
-      }else if(w.qLB[2] > m2 -1){
-        w.qLB[2] <- m2 -1
-      }
-      if(sum(w.qLB) > qLB){
-        w.qLB[which.max(w.qLB)] <- max(w.qLB) - (sum(w.qLB)-qLB)
-      }
-      s.qLB <- qLB - w.qLB[1] -w.qLB[2]
+      # #radom
+      # w.qLB <- rbinom(n = 2, size = qLB, prob = w.ratio)
+      # if(w.qLB[1] > m1 -1){
+      #   w.qLB[1] <- m1 -1  
+      # }else if(w.qLB[2] > m2 -1){
+      #   w.qLB[2] <- m2 -1
+      # }
+      # if(sum(w.qLB) > qLB){
+      #   w.qLB[which.max(w.qLB)] <- max(w.qLB) - (sum(w.qLB)-qLB)
+      # }
+      # s.qLB <- qLB - w.qLB[1] -w.qLB[2]
       replace.matrix <- generateSLD(m1 = m1, m2 = m2, m3 = m3, b1 = b1, n2 = n2)
       
-      #print(w.qLB[1])
-      #print(w.qLB[2])
-      #print(s.qLB)
-      #wholeplot1
+      #radom
+      y <- 0
+      while(y == 0){
+        w.qLB <- rbinom(n = 2, size = qLB, prob = w.ratio) 
+        if(w.qLB[1] <= m1-1 && w.qLB[2] <= m2-1 && sum(w.qLB) <= qLB){
+          y <- 1
+        }
+      }
+      s.qLB <- qLB - w.qLB[1] -w.qLB[2]
+      
       if(w.qLB[1] != 0){
         w1.replace.index <- sample(m1,size = w.qLB[1])
         mSIBSSD.list[[i]][,w1.replace.index] <- replace.matrix[,w1.replace.index]  
