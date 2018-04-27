@@ -242,10 +242,202 @@ write.csv(test[[2]],"record_notradom.csv",row.names = F, col.names = F)
 ```{r}
 write.csv(record.GB,"record_GB.csv",row.names = F, col.names = F)
 ```
-
-
 ```{r}
 write.csv(record.LB,"record_LB.csv",row.names = F, col.names = F)
 ```
 
+###########
+# example 2
+```{r}
+staggered_level_MSIBSSD_BayesianD_while <- function(particle,U2, m1, m2, m3, b1, n2, qLB, qGB, w.ratio, success.value, early.break = 100){
+  
+  #1: Randomly generate a set of balanced N*m SSDs as initial particles
+  mSIBSSD.list <- list()
+  for(i in 1:particle){
+    mSIBSSD.list[[i]] <- generateSLD(m1 = m1, m2 = m2,m3 = m3, b1 = b1, n2 = n2)  
+  }
+  
+  #2: Evaluate objective function value of each SSD
+  BayesianD.value <- numeric(particle)
+  for(j in 1:particle){
+    BayesianD.value[j] <- evaluateMBayesianD(MSSD = mSIBSSD.list[[j]], U2 = U2, b1 = b1, n2 = n2)  
+  }
+  
+  #3: Initialize the LB for all SSDs
+  LB <- list()
+  for(i in 1:particle){
+    LB[[i]] <- list(design = mSIBSSD.list[[i]], value = BayesianD.value[i])   
+  }
+  
+  #4: Initialize the GB
+  GB <- LB[[1]]
+  for(i in 1:particle){
+    if(LB[[i]]$value > GB$value)
+    GB <- LB[[i]]   
+  }
+  
+  #record the GB value
+  record <- GB$value
+  
+  #5: while not converge do
+  progress <- 0               #index for print when make progress and early break
+  break.index <- 1
+  
+  success <- 0
+  i <- 1
+  while(success == 0){
+    
+    #deal with early break and print when make progress
+    if((i - break.index) >= early.break){
+      break  
+    }else if(progress == 1){
+      print(paste("iteration:",i,",value:",GB$value))
+      progress <- 0
+      break.index <- i
+    }
 
+    
+    
+    #6: For each SSD, perform the MIX operation 
+    mixw <- mixOperation(particle = particle,
+                         U2 = U2,
+                         m1 = m1,
+                         m2 = m2,
+                         m3 = m3,
+                         b1 = b1,
+                         n2 = n2,
+                         mSIBSSD.list = mSIBSSD.list, 
+                         w.ratio = w.ratio, 
+                         LB = LB,
+                         GB = GB, 
+                         qLB = qLB, 
+                         qGB = qGB)
+    
+   
+    #7: For each SSD, perform the MOVE operation
+    mSIBSSD.list <- moveOperation(particle = particle,
+                                  U2 = U2,
+                                  m1 = m1,
+                                  m2 = m2,
+                                  m3 = m3,
+                                  b1 = b1,
+                                  n2 = n2,
+                                  mSIBSSD.list = mSIBSSD.list,
+                                  w.ratio = w.ratio,
+                                  mixwLB = mixw$mixwLB, 
+                                  mixwGB = mixw$mixwGB, 
+                                  qLB = qLB, 
+                                  qGB = qGB)
+    
+    #9: Update the LB for all SSDs
+    BayesianD.value <- numeric(particle)
+    for(j in 1:particle){
+      BayesianD.value[j] <- evaluateMBayesianD(MSSD = mSIBSSD.list[[j]], U2 = U2, b1 = b1, n2 = n2)  
+    }
+
+    for(j in 1:particle){
+      if(BayesianD.value[j] > LB[[j]]$value){
+        LB[[j]] <- list(design = mSIBSSD.list[[j]], value = BayesianD.value[j])  
+      }
+    }
+    
+    #10: Update the GB
+    if(max(BayesianD.value) > GB$value){
+      GB <- LB[[which.max(BayesianD.value)]] 
+      progress <- 1
+    }
+  
+  record <- c(record,GB$value)
+  if(GB$value >= success.value){
+    success <- 1  
+  }
+  i <- i +1
+  #11: end while
+  }
+  return(list(GB,record))  
+}
+```
+```{r}
+m1 <- 2
+m2 <- 2
+m3 <- 2
+b1 <- 4
+b2 <- 5
+n2 <- 4
+
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+
+```
+
+```{r}
+library(tictoc)
+tic()
+m1 <- 2
+m2 <- 2
+m3 <- 2
+b1 <- 4
+b2 <- 5
+n2 <- 4
+qLB <- floor((m1+m2+m3)/3)
+qGB <- floor((m1+m2+m3)/6)
+
+w.ratio <- 0.1
+test <- staggered_level_MSIBSSD_BayesianD_while(particle = 500,
+                                          U2 = U2, 
+                                          m1 = m1, 
+                                          m2 = m2, 
+                                          m3 = m3, 
+                                          b1 = b1, 
+                                          n2 = n2, 
+                                          qLB = qLB, 
+                                          qGB = qGB, 
+                                          w.ratio = w.ratio, 
+                                          success.value = 1.6359, 
+                                          early.break = 100)
+#Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
+toc()
+```
+```{r}
+test
+Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
+```
+
+# record time and iteration
+```{r}
+time.record <- c()
+iteration.record <- c()
+for(i in 1:100){
+  time.record <- rbind(time.record,system.time(
+    result <- staggered_level_MSIBSSD_BayesianD_while(particle = 500,
+                                                      U2 = U2, 
+                                                      m1 = m1, 
+                                                      m2 = m2, 
+                                                      m3 = m3, 
+                                                      b1 = b1, 
+                                                      n2 = n2, 
+                                                      qLB = qLB, 
+                                                      qGB = qGB, 
+                                                      w.ratio = w.ratio, 
+                                                      success.value = 1.6359, 
+                                                      early.break = 100)
+  ))
+  print(i)
+  iteration.record <- c(iteration.record, length(result[[2]]))
+}
+```
+
+```{r}
+mean(time.record[,3])
+mean(iteration.record)
+```
+```{r}
+write.csv(iteration.record,"iteration_record.csv",row.names = F, col.names = F)
+```
+
+```{r}
+write.csv(time.record,"time_record.csv",row.names = F, col.names = F)
+```

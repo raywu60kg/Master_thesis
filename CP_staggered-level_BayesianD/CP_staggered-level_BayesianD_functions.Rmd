@@ -106,7 +106,7 @@ deleteOperation <- function(design, U2, b1, n2, m1, m2, m3, k){
   }
   
   number.remain.column <- c(tem.m1, tem.m2, tem.m3)
-  print(number.remain.column)
+  #print(number.remain.column)
   return(list(design = design,
               number.remain.column = number.remain.column,
               delete.column.m1 = delete.column.m1,

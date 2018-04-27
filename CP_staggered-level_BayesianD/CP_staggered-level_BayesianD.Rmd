@@ -74,7 +74,116 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
     #1. Generate a balanced N*m SSDs
     tem.design <- generateSLD(m1 = m1, m2 = m2,m3 = m3, b1 = b1, n2 = n2)  
     BayesianD.value <- evaluateMBayesianD(MSSD = tem.design, U2 = U2, b1 =b1, n2 = n2)
+    current.design <- tem.design
+    
+    #5. Repeat steps 2,3,4 until no improvement can be made.
+    progress <- 0
+    while(progress == 0){
+      
+      #2. Delete k columns which have the smallest object value.(k=1)
+      deleted.design <- deleteOperation(design = tem.design,
+                                        U2 = U2, 
+                                        b1 = b1,
+                                        n2 = n2,
+                                        m1 = m1,
+                                        m2 = m2,
+                                        m3 = m3,
+                                        k = k)  
+      
+      #3. Adjust the delete columns as candidate set.(only first order)
+      candidate.set <- adjustOperation(column.m1 = deleted.design$delete.column.m1,
+                                       column.m2 = deleted.design$delete.column.m2,
+                                       column.m3 = deleted.design$delete.column.m3,
+                                       b1 = b1,
+                                       n2 = n2)
+      
+      #4. Add column at the candidate set with the largest object value.
+      added.design <- addOperation(design = deleted.design$design,
+                                   candidate.set = candidate.set,
+                                   m1 = m1,
+                                   m2 = m2,
+                                   m3 = m3,
+                                   b1 = b1,
+                                   n2 = n2,
+                                   number.remain.column = deleted.design$number.remain.column)
+      #print(deleted.design$number.remain.column)
+      if(added.design$value > BayesianD.value){
+        BayesianD.value <- added.design$value 
+        tem.design <- added.design$design
+        current.design <- added.design$design
+        
+      }else{
+        progress <- 1    
+      }
+    }
+    
+    tryCatch({
+      if(BayesianD.value > best.design$value){
+        best.design$design <- current.design
+        best.design$value <- BayesianD.value
+        print(paste("iteration:",i))
+        print(best.design)
+        
+      }
+      }, error = function(err){
+        best.design <<- added.design
+      })
+    record <- c(record,best.design$value)
+    
+  } 
+  return(list(best.design = best.design,record = record))
+}
 
+```
+#####start#####
+#test
+```{r}
+library(tictoc)
+tic()
+m1 <- 7
+m2 <- 7
+m3 <- 8
+b1 <- 6
+b2 <- 7
+b3 <- 24
+n <- 24
+n2 <- 4
+starting.design <- 10
+#k <- round(m/3)
+k=5
+result <- CP_staggered_level_BayesianD(starting.design = starting.design,
+                                       U2 = U2,
+                                       m1 = m1,
+                                       m2 = m2,
+                                       m3 = m3,
+                                       b1 = b1,
+                                       n2 = n2,
+                                       k = k)
+toc()
+```
+
+```{r}
+evaluateMBayesianD(MSSD = added.design$design, U2 = U2, b1 =b1, n2 = n2)
+```
+
+####
+example 2
+```{r}
+CP_staggered_level_BayesianD_while <- function(success.value,U2, m1, m2, m3, b1, n2, k){
+  record <- c()
+  success <- 0
+  i <- 1
+  while(success == 0){
+
+    # if(added.design$value > best.design$value){
+    #   best.design <- added.design
+    #   print(best.design)
+    # }
+    
+    #1. Generate a balanced N*m SSDs
+    tem.design <- generateSLD(m1 = m1, m2 = m2,m3 = m3, b1 = b1, n2 = n2)  
+    BayesianD.value <- evaluateMBayesianD(MSSD = tem.design, U2 = U2, b1 =b1, n2 = n2)
+    current.design <- tem.design 
     #5. Repeat steps 2,3,4 until no improvement can be made.
     progress <- 0
     while(progress == 0){
@@ -109,15 +218,17 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
       if(added.design$value > BayesianD.value){
         BayesianD.value <- added.design$value 
         tem.design <- added.design$design
-        #print(i)
+        current.design <- added.design$design
+        
       }else{
         progress <- 1    
       }
     }
     
     tryCatch({
-      if(added.design$value > best.design$value){
-        best.design <- added.design
+      if(BayesianD.value > best.design$value){
+        best.design$design <- current.design
+        best.design$value <- BayesianD.value
         print(paste("iteration:",i))
         print(best.design)
         
@@ -126,35 +237,70 @@ CP_staggered_level_BayesianD <- function(starting.design,U2, m1, m2, m3, b1, n2,
         best.design <<- added.design
       })
     record <- c(record,best.design$value)
-    
+    if(best.design$value >= success.value){
+      success <- 1
+    }
+    i <- i + 1
   } 
   return(list(best.design = best.design,record = record))
 }
-
 ```
-#####start#####
-#test
+
 ```{r}
+m1 <- 2
+m2 <- 2
+m3 <- 2
+b1 <- 4
+b2 <- 5
+n2 <- 4
+
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+
+k=1
 library(tictoc)
 tic()
-m1 <- 7
-m2 <- 7
-m3 <- 8
-b1 <- 6
-b2 <- 7
-b3 <- 24
-n <- 24
-n2 <- 4
-starting.design <- 100000
-#k <- round(m/3)
-k=5
-result <- CP_staggered_level_BayesianD(starting.design = starting.design,
-                                       U2 = U2,
-                                       m1 = m1,
-                                       m2 = m2,
-                                       m3 = m3,
-                                       b1 = b1,
-                                       n2 = n2,
-                                       k = k)
+result <- CP_staggered_level_BayesianD_while(success.value = 1.6359,
+                                             U2 = U2,
+                                             m1 = m1,
+                                             m2 = m2,
+                                             m3 = m3,
+                                             b1 = b1,
+                                             n2 = n2,
+                                             k = k)
 toc()
 ```
+
+# record time and iteration
+```{r}
+time.record <- c()
+iteration.record <- c()
+for(i in 1:100){
+  time.record <- rbind(time.record,system.time(
+    result <- CP_staggered_level_BayesianD_while(success.value = 1.6359,
+                                               U2 = U2,
+                                               m1 = m1,
+                                               m2 = m2,
+                                               m3 = m3,
+                                               b1 = b1,
+                                               n2 = n2,
+                                               k = k)  
+  ))
+  print(i)
+  iteration.record <- c(iteration.record, length(result$record))
+}
+```
+
+```{r}
+write.csv(iteration.record,"iteration_record.csv",row.names = F, col.names = F)
+```
+
+```{r}
+write.csv(time.record,"time_record.csv",row.names = F, col.names = F)
+```
+
+
+

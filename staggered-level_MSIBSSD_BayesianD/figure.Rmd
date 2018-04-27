@@ -96,3 +96,128 @@ ggplot(data_LB, aes(x=factor_type, y=times, fill = factor_type)) +
 dev.off()
 ```
 
+#### example2
+```{r}
+CP.time <- read.csv("D:/statisic/Master_thesis/CP_staggered-level_BayesianD/time_record.csv",header = T)
+CP.iteration <- read.csv("D:/statisic/Master_thesis/CP_staggered-level_BayesianD/iteration_record.csv",header = T)
+PSO.time <- read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/time_record.csv",header = T)
+PSO.iteration <- read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/iteration_record.csv",header = T)
+```
+
+```{r}
+# library
+library(ggplot2)
+
+# create data
+names=c(rep("A", 20) , rep("B", 5) , rep("C", 30), rep("D", 100))
+value=c( sample(2:5, 20 , replace=T) , sample(4:10, 5 , replace=T), sample(1:7, 30 , replace=T), sample(3:8, 100 , replace=T) )
+data=data.frame(names,value)
+
+# prepare a special xlab with the number of obs for each group
+my_xlab <- paste(levels(data$names),"\n(N=",table(data$names),")",sep="")
+
+# plot
+ggplot(data, aes(x=names, y=value, fill=names)) +
+  geom_boxplot(varwidth = TRUE, alpha=0.2) +
+  theme(legend.position="none") +
+  scale_x_discrete(labels=my_xlab)
+
+```
+
+#iteration
+```{r}
+
+# library
+library(ggplot2)
+
+# create data
+Algorithm=c(rep("CP", 100) , rep("PSO", 100))
+iteration=c(as.matrix(CP.iteration),as.matrix(PSO.iteration))
+data=data.frame(Algorithm,iteration)
+
+# prepare a special xlab with the number of obs for each group
+#my_xlab <- paste(levels(data$names),"\n(N=",table(data$names),")",sep="")
+
+# plot
+ggplot(data, aes(x=Algorithm, y=iteration, fill=Algorithm)) +
+  geom_boxplot(varwidth = TRUE, alpha=0.2) +
+  #theme(legend.position="none") +
+  #scale_x_discrete(labels=my_xlab) + 
+  #ylim(0,102000)+
+  ggtitle("Iteration times") +
+  scale_y_sqrt(breaks=c(0,3,14180,5000,50000,102000))
+  #scale_y_sqrt(breaks=c(3,14180,50000,102000)) 
+
+```
+
+# time
+```{r}
+# library
+library(ggplot2)
+
+# create data
+Algorithm=c(rep("CP", 100) , rep("PSO", 100))
+time_elapsed=c(as.matrix(CP.time[,3]),as.matrix(PSO.time[,3]))
+data=data.frame(Algorithm,time_elapsed)
+
+# prepare a special xlab with the number of obs for each group
+#my_xlab <- paste(levels(data$names),"\n(N=",table(data$names),")",sep="")
+
+# plot
+ggplot(data, aes(x=Algorithm, y=time_elapsed, fill=Algorithm)) +
+  geom_boxplot(varwidth = TRUE, alpha=0.2) +
+  #theme(legend.position="none") +
+  #scale_x_discrete(labels=my_xlab) + 
+  scale_y_sqrt(breaks = c(0,1310,500,154.515,7.445))+
+  ggtitle("Time elapsed")
+```
+
+```{r}
+png(filename = "iteration.png")
+# library
+library(ggplot2)
+
+# create data
+Algorithm=c(rep("CP", 100) , rep("PSO", 100))
+iteration=c(as.matrix(CP.iteration),as.matrix(PSO.iteration))
+data=data.frame(Algorithm,iteration)
+
+# prepare a special xlab with the number of obs for each group
+#my_xlab <- paste(levels(data$names),"\n(N=",table(data$names),")",sep="")
+
+# plot
+ggplot(data, aes(x=Algorithm, y=iteration, fill=Algorithm)) +
+  geom_boxplot(varwidth = TRUE, alpha=0.2) +
+  #theme(legend.position="none") +
+  #scale_x_discrete(labels=my_xlab) + 
+  #ylim(0,102000)+
+  ggtitle("Iteration times") +
+  scale_y_sqrt(breaks=c(0,3,14180,5000,50000,102000))
+  #scale_y_sqrt(breaks=c(3,14180,50000,102000)) 
+
+dev.off()
+```
+
+```{r}
+png(filename = "time.png")
+# library
+library(ggplot2)
+
+# create data
+Algorithm=c(rep("CP", 100) , rep("PSO", 100))
+time_elapsed=c(as.matrix(CP.time[,3]),as.matrix(PSO.time[,3]))
+data=data.frame(Algorithm,time_elapsed)
+
+# prepare a special xlab with the number of obs for each group
+#my_xlab <- paste(levels(data$names),"\n(N=",table(data$names),")",sep="")
+
+# plot
+ggplot(data, aes(x=Algorithm, y=time_elapsed, fill=Algorithm)) +
+  geom_boxplot(varwidth = TRUE, alpha=0.2) +
+  #theme(legend.position="none") +
+  #scale_x_discrete(labels=my_xlab) + 
+  scale_y_sqrt(breaks = c(0,1310,500,154.515,7.445))+
+  ggtitle("Time elapsed")
+dev.off()
+```
+
