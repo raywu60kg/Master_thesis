@@ -103,6 +103,12 @@ CP.iteration <- read.csv("D:/statisic/Master_thesis/CP_staggered-level_BayesianD
 PSO.time <- read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/time_record.csv",header = T)
 PSO.iteration <- read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/iteration_record.csv",header = T)
 ```
+```{r}
+summary(CP.iteration)
+summary(CP.time[,3])
+summary(PSO.iteration)
+summary(PSO.time[,3])
+```
 
 ```{r}
 # library
@@ -145,7 +151,7 @@ ggplot(data, aes(x=Algorithm, y=iteration, fill=Algorithm)) +
   #scale_x_discrete(labels=my_xlab) + 
   #ylim(0,102000)+
   ggtitle("Iteration times") +
-  scale_y_sqrt(breaks=c(0,3,14180,5000,50000,102000))
+  scale_y_sqrt(breaks = c(100000,median(as.matrix(PSO.iteration)),median(as.matrix(CP.iteration)),max(as.matrix(CP.iteration))))
   #scale_y_sqrt(breaks=c(3,14180,50000,102000)) 
 
 ```
@@ -168,7 +174,7 @@ ggplot(data, aes(x=Algorithm, y=time_elapsed, fill=Algorithm)) +
   geom_boxplot(varwidth = TRUE, alpha=0.2) +
   #theme(legend.position="none") +
   #scale_x_discrete(labels=my_xlab) + 
-  scale_y_sqrt(breaks = c(0,1310,500,154.515,7.445))+
+  scale_y_sqrt(breaks = c(0,median(PSO.time[,3]),500,median(CP.time[,3]),max(CP.time[,3])))+
   ggtitle("Time elapsed")
 ```
 
@@ -192,7 +198,7 @@ ggplot(data, aes(x=Algorithm, y=iteration, fill=Algorithm)) +
   #scale_x_discrete(labels=my_xlab) + 
   #ylim(0,102000)+
   ggtitle("Iteration times") +
-  scale_y_sqrt(breaks=c(0,3,14180,5000,50000,102000))
+  scale_y_sqrt(breaks = c(100000,median(as.matrix(PSO.iteration)),median(as.matrix(CP.iteration)),max(as.matrix(CP.iteration))))
   #scale_y_sqrt(breaks=c(3,14180,50000,102000)) 
 
 dev.off()
@@ -216,8 +222,9 @@ ggplot(data, aes(x=Algorithm, y=time_elapsed, fill=Algorithm)) +
   geom_boxplot(varwidth = TRUE, alpha=0.2) +
   #theme(legend.position="none") +
   #scale_x_discrete(labels=my_xlab) + 
-  scale_y_sqrt(breaks = c(0,1310,500,154.515,7.445))+
+  scale_y_sqrt(breaks = c(0,median(PSO.time[,3]),500,median(CP.time[,3]),max(CP.time[,3])))+
   ggtitle("Time elapsed")
 dev.off()
 ```
+
 

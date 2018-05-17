@@ -22,6 +22,7 @@ Dcriterion_staggered <- function(mSSD, U2, f = f, b1 = b1, n2 = n2){
 ```{r}
 evaluateMBayesianD <- function(MSSD, U2, b1 ,n2){
   tau <- sqrt(5)
+  #tau <- sqrt(2)
   m <- ncol(MSSD)
   
   #primary
@@ -36,7 +37,7 @@ evaluateMBayesianD <- function(MSSD, U2, b1 ,n2){
   #get S 
   library(Matrix)   
   U1 <- kronecker(diag(b1),matrix(1,n2,1))
-  S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2)) # 2 is from paper
+  S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2)) 
   
   x <- as.matrix(cbind(primary,potential.adj))  
   K <- diag(c(rep(0,p1),rep(1,p2)))
@@ -320,164 +321,164 @@ mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio
 
 #not radom
 ```{r}
-mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio = 0.1, LB, GB, qLB, qGB){
-  mixwLB <- list()
-  mixwGB <- list()
-  for(i in 1:particle){
-    worksheet <- mSIBSSD.list[[i]]
-    
-    ###mixwLB###
-    #column deletion step 
-    tem <- worksheet
-    tem.m1 <- m1
-    tem.m2 <- m2
-    tem.m3 <- m3
-
-    for(j in 1:qLB){
-      lack.value <- numeric(ncol(tem))
-      for(k in 1:ncol(tem)){
-        lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
-      }
-      if(which.max(lack.value) <= tem.m1){
-        tem.m1 <- tem.m1 - 1
-      }else if(which.max(lack.value) > tem.m1 + tem.m2){
-        tem.m3 <- tem.m3 - 1
-      }else{
-        tem.m2 <- tem.m2 -1
-      }
-      tem <- tem[,-which.max(lack.value)]
-    }
-    
-    ## test
-    record.LB <<- rbind(record.LB,c(tem.m1,tem.m2,tem.m3))
-   
-    
-    #column addition step
-    add.matrix <- LB[[i]]$design
-    add.number.m1 <- m1 - tem.m1
-    add.number.m2 <- m2 - tem.m2
-    add.number.m3 <- m3 - tem.m3
-    
-    #wholeplot1
-    if(add.number.m1 != 0){
-      for(j in 1:add.number.m1){
-        add.value <- numeric(m1)   
-        for(k in 1:m1){
-          
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem),U2 = U2, b1 = b1,n2 = n2)
-        }
-        tem <- cbind(add.matrix[,which.max(add.value)], tem)
-        
-      }
-    }
-   
-    #wholeplot2
-    if(add.number.m2 != 0){
-      for(j in 1:add.number.m2){
-        add.value <- numeric(m2)   
-        for(k in 1:m2){
-          
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
-        }
-        tem <- cbind(tem[,1:m1], add.matrix[,m1 + which.max(add.value)], tem[,(m1+1) :ncol(tem)])
-        
-      }
-    }
-    
-    #subplot
-    if(add.number.m3 != 0){
-      for(j in 1:add.number.m3){
-        add.value <- numeric(m3)   
-        for(k in 1:m3){
-          
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]),U2 = U2, b1 = b1,n2 = n2)
-        }
-        tem <- cbind(tem,add.matrix[,m1 + m2 + which.max(add.value)])
-      }
-    }
-  
-    ###
-    mixwLB[[i]] <- list(design = tem,value = evaluateMBayesianD(MSSD = tem,U2 = U2,b1 = b1,n2 = n2))  #important value
-    ###
-    
-    ###mixwGB###
-    #column deletion step 
-    tem <- worksheet
-    tem.m1 <- m1
-    tem.m2 <- m2
-    tem.m3 <- m3
-
-    for(j in 1:qGB){
-      lack.value <- numeric(ncol(tem))
-      for(k in 1:ncol(tem)){
-        lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
-      }
-      if(which.max(lack.value) <= tem.m1){
-        tem.m1 <- tem.m1 - 1
-      }else if(which.max(lack.value) > tem.m1 + tem.m2){
-        tem.m3 <- tem.m3 - 1
-      }else{
-        tem.m2 <- tem.m2 -1
-      }
-      tem <- tem[,-which.max(lack.value)]
-    }
-    ## test
-    record.GB <<- rbind(record.GB,c(tem.m1,tem.m2,tem.m3))
-    
-    #column addition step
-    add.matrix <- GB$design
-    add.number.m1 <- m1 - tem.m1
-    add.number.m2 <- m2 - tem.m2
-    add.number.m3 <- m3 - tem.m3
-    
-    #wholeplot1
-    if(add.number.m1 != 0){
-      for(j in 1:add.number.m1){
-        add.value <- numeric(m1)   
-        for(k in 1:m1){
-          
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem),U2 = U2, b1 = b1,n2 = n2)
-        }
-        tem <- cbind(add.matrix[,which.max(add.value)], tem)
-      }
-    }
-    
-    #wholeplot2
-    if(add.number.m2 != 0){
-      for(j in 1:add.number.m2){
-        add.value <- numeric(m2)   
-        for(k in 1:m2){
-          
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
-        }
-        tem <- cbind(tem[,1:m1], add.matrix[,m1 + which.max(add.value)], tem[,(m1+1) :ncol(tem)])
-        
-      }
-    }
-    
-    #subplot
-    if(add.number.m3 != 0){
-      for(j in 1:add.number.m3){
-        add.value <- numeric(m3)   
-        for(k in 1:m3){
-          
-          add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]),U2 = U2, b1 = b1,n2 = n2)
-        }
-        tem <- cbind(tem,add.matrix[,m1 + m2 + which.max(add.value)])
-      }
-    }
-   
-    ###
-    mixwGB[[i]] <- list(design = tem,value = evaluateMBayesianD(MSSD = tem, U2 = U2, b1 = b1,n2 = n2))  #important value    
-    ###
-  
-    
-    
- 
-  }
-  return(list(mixwLB = mixwLB, mixwGB = mixwGB))
-  
-}
+# mixOperation <- function(particle, U2, m1, m2, m3, b1, n2, mSIBSSD.list, w.ratio = 0.1, LB, GB, qLB, qGB){
+#   mixwLB <- list()
+#   mixwGB <- list()
+#   for(i in 1:particle){
+#     worksheet <- mSIBSSD.list[[i]]
+#     
+#     ###mixwLB###
+#     #column deletion step 
+#     tem <- worksheet
+#     tem.m1 <- m1
+#     tem.m2 <- m2
+#     tem.m3 <- m3
+# 
+#     for(j in 1:qLB){
+#       lack.value <- numeric(ncol(tem))
+#       for(k in 1:ncol(tem)){
+#         lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
+#       }
+#       if(which.max(lack.value) <= tem.m1){
+#         tem.m1 <- tem.m1 - 1
+#       }else if(which.max(lack.value) > tem.m1 + tem.m2){
+#         tem.m3 <- tem.m3 - 1
+#       }else{
+#         tem.m2 <- tem.m2 -1
+#       }
+#       tem <- tem[,-which.max(lack.value)]
+#     }
+#     
+#     ## test
+#     record.LB <<- rbind(record.LB,c(tem.m1,tem.m2,tem.m3))
+#    
+#     
+#     #column addition step
+#     add.matrix <- LB[[i]]$design
+#     add.number.m1 <- m1 - tem.m1
+#     add.number.m2 <- m2 - tem.m2
+#     add.number.m3 <- m3 - tem.m3
+#     
+#     #wholeplot1
+#     if(add.number.m1 != 0){
+#       for(j in 1:add.number.m1){
+#         add.value <- numeric(m1)   
+#         for(k in 1:m1){
+#           
+#           add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem),U2 = U2, b1 = b1,n2 = n2)
+#         }
+#         tem <- cbind(add.matrix[,which.max(add.value)], tem)
+#         
+#       }
+#     }
+#    
+#     #wholeplot2
+#     if(add.number.m2 != 0){
+#       for(j in 1:add.number.m2){
+#         add.value <- numeric(m2)   
+#         for(k in 1:m2){
+#           
+#           add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
+#         }
+#         tem <- cbind(tem[,1:m1], add.matrix[,m1 + which.max(add.value)], tem[,(m1+1) :ncol(tem)])
+#         
+#       }
+#     }
+#     
+#     #subplot
+#     if(add.number.m3 != 0){
+#       for(j in 1:add.number.m3){
+#         add.value <- numeric(m3)   
+#         for(k in 1:m3){
+#           
+#           add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]),U2 = U2, b1 = b1,n2 = n2)
+#         }
+#         tem <- cbind(tem,add.matrix[,m1 + m2 + which.max(add.value)])
+#       }
+#     }
+#   
+#     ###
+#     mixwLB[[i]] <- list(design = tem,value = evaluateMBayesianD(MSSD = tem,U2 = U2,b1 = b1,n2 = n2))  #important value
+#     ###
+#     
+#     ###mixwGB###
+#     #column deletion step 
+#     tem <- worksheet
+#     tem.m1 <- m1
+#     tem.m2 <- m2
+#     tem.m3 <- m3
+# 
+#     for(j in 1:qGB){
+#       lack.value <- numeric(ncol(tem))
+#       for(k in 1:ncol(tem)){
+#         lack.value[k] <- evaluateMBayesianD(MSSD = tem[ ,-k],U2 = U2, b1 = b1,n2 = n2)
+#       }
+#       if(which.max(lack.value) <= tem.m1){
+#         tem.m1 <- tem.m1 - 1
+#       }else if(which.max(lack.value) > tem.m1 + tem.m2){
+#         tem.m3 <- tem.m3 - 1
+#       }else{
+#         tem.m2 <- tem.m2 -1
+#       }
+#       tem <- tem[,-which.max(lack.value)]
+#     }
+#     ## test
+#     record.GB <<- rbind(record.GB,c(tem.m1,tem.m2,tem.m3))
+#     
+#     #column addition step
+#     add.matrix <- GB$design
+#     add.number.m1 <- m1 - tem.m1
+#     add.number.m2 <- m2 - tem.m2
+#     add.number.m3 <- m3 - tem.m3
+#     
+#     #wholeplot1
+#     if(add.number.m1 != 0){
+#       for(j in 1:add.number.m1){
+#         add.value <- numeric(m1)   
+#         for(k in 1:m1){
+#           
+#           add.value[k] <- evaluateMBayesianD(MSSD = cbind(add.matrix[ ,k], tem),U2 = U2, b1 = b1,n2 = n2)
+#         }
+#         tem <- cbind(add.matrix[,which.max(add.value)], tem)
+#       }
+#     }
+#     
+#     #wholeplot2
+#     if(add.number.m2 != 0){
+#       for(j in 1:add.number.m2){
+#         add.value <- numeric(m2)   
+#         for(k in 1:m2){
+#           
+#           add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem[,1:m1],add.matrix[ ,m1 +k], tem[,(m1+1):ncol(tem)]),U2 = U2, b1 = b1,n2 = n2)
+#         }
+#         tem <- cbind(tem[,1:m1], add.matrix[,m1 + which.max(add.value)], tem[,(m1+1) :ncol(tem)])
+#         
+#       }
+#     }
+#     
+#     #subplot
+#     if(add.number.m3 != 0){
+#       for(j in 1:add.number.m3){
+#         add.value <- numeric(m3)   
+#         for(k in 1:m3){
+#           
+#           add.value[k] <- evaluateMBayesianD(MSSD = cbind(tem, add.matrix[ ,m1 +m2 +k]),U2 = U2, b1 = b1,n2 = n2)
+#         }
+#         tem <- cbind(tem,add.matrix[,m1 + m2 + which.max(add.value)])
+#       }
+#     }
+#    
+#     ###
+#     mixwGB[[i]] <- list(design = tem,value = evaluateMBayesianD(MSSD = tem, U2 = U2, b1 = b1,n2 = n2))  #important value    
+#     ###
+#   
+#     
+#     
+#  
+#   }
+#   return(list(mixwLB = mixwLB, mixwGB = mixwGB))
+#   
+# }
 ```
 
 

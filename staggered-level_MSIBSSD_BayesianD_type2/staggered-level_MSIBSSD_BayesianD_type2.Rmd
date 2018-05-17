@@ -1,0 +1,341 @@
+---
+title: "staggered-level_MSIBSSD_BayesianD_type2"
+output: html_document
+---
+#Notation
+m1 class-1 whole-plot factors,
+m2 class-2 whole-plot factors,
+m3 subplot factors,
+b1 is the number of class-1 whole plots,
+b2 = b1+1 is the number of class-2 whole plots,
+b3 is the number of subplots,
+n2 is the size of each class-1 whole plot,
+n = b1*n2 = b3.
+```{r}
+source_rmd <- function(file, local = FALSE, ...){
+  options(knitr.duplicate.label = 'allow')
+
+  tempR <- tempfile(tmpdir = ".", fileext = ".R")
+  on.exit(unlink(tempR))
+  knitr::purl(file, output=tempR, quiet = TRUE)
+
+  envir <- globalenv()
+  source(tempR, local = envir, ...)
+}
+
+Sys.setlocale('LC_ALL','C')
+source_rmd("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD_type2/staggered-level_MSIBSSD_BayesianD_type2_functions.Rmd")
+```
+
+```{r}
+m1 <- 7
+m2 <- 7
+m3 <- 8
+b1 <- 6
+b2 <- 7
+b3 <- 24
+n <- 24
+n2 <- 4
+
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+
+table8 <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_BayesianD/table8.csv",header = F))
+```
+
+# Df values
+```{r}
+Dcriterion_staggered(mSSD = table8, U2 = U2, f = 2, b1 = b1, n2 = n2)
+Dcriterion_staggered(mSSD = table8, U2 = U2, f = 3, b1 = b1, n2 = n2)
+Dcriterion_staggered(mSSD = table8, U2 = U2, f = 4, b1 = b1, n2 = n2)
+Dcriterion_staggered(mSSD = table8, U2 = U2, f = 5, b1 = b1, n2 = n2)
+```
+
+# Bayesian D value
+```{r}
+evaluateMBayesianD(MSSD = table8, U2 = U2, b1 =b1, n2 = n2)
+```
+
+```{r}
+for(i in 1:20){
+  print(evaluateMBayesianD(MSSD = table8,primary.number = i, U2 = U2, b1 =b1, n2 = n2))  
+}
+```
+
+```{r}
+staggered_level_MSIBSSD_BayesianD_type2 <- function(particle,U2, m1, m2, m3, b1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
+  
+  #1: Randomly generate a set of balanced N*m SSDs as initial particles
+  mSIBSSD.list <- list()
+  for(i in 1:particle){
+    mSIBSSD.list[[i]] <- generateSLD(m1 = m1, m2 = m2,m3 = m3, b1 = b1, n2 = n2)  
+  }
+  
+  #2: Evaluate objective function value of each SSD
+  BayesianD.value <- numeric(particle)
+  for(j in 1:particle){
+    BayesianD.value[j] <- evaluateMBayesianD(MSSD = mSIBSSD.list[[j]], U2 = U2, b1 = b1, n2 = n2)  
+  }
+  
+  #3: Initialize the LB for all SSDs
+  LB <- list()
+  for(i in 1:particle){
+    LB[[i]] <- list(design = mSIBSSD.list[[i]], value = BayesianD.value[i])   
+  }
+  
+  #4: Initialize the GB
+  GB <- LB[[1]]
+  for(i in 1:particle){
+    if(LB[[i]]$value > GB$value)
+    GB <- LB[[i]]   
+  }
+  
+  #record the GB value
+  record <- GB$value
+  
+  #5: while not converge do
+  progress <- 0                            #index for print when make progress and early break
+  break.index <- 1
+  for(i in 1:iteration){
+    
+    #deal with early break and print when make progress
+    if((i - break.index) >= early.break){
+      break  
+    }else if(progress == 1){
+      print(paste("iteration:",i,",value:",GB$value))
+      progress <- 0
+      break.index <- i
+    }
+
+    
+    
+    #6: For each SSD, perform the MIX operation 
+    mixw <- mixOperation_type2(particle = particle,
+                               U2 = U2,
+                               m1 = m1,
+                               m2 = m2,
+                               m3 = m3,
+                               b1 = b1,
+                               n2 = n2,
+                               mSIBSSD.list = mSIBSSD.list, 
+                               w.ratio = w.ratio, 
+                               LB = LB,
+                               GB = GB, 
+                               qLB = qLB, 
+                               qGB = qGB)
+          
+   
+    #7: For each SSD, perform the MOVE operation
+    mSIBSSD.list <- moveOperation(particle = particle,
+                                  U2 = U2,
+                                  m1 = m1,
+                                  m2 = m2,
+                                  m3 = m3,
+                                  b1 = b1,
+                                  n2 = n2,
+                                  mSIBSSD.list = mSIBSSD.list,
+                                  w.ratio = w.ratio,
+                                  mixwLB = mixw$mixwLB, 
+                                  mixwGB = mixw$mixwGB, 
+                                  qLB = qLB, 
+                                  qGB = qGB)
+    
+    #9: Update the LB for all SSDs
+    BayesianD.value <- numeric(particle)
+    for(j in 1:particle){
+      BayesianD.value[j] <- evaluateMBayesianD(MSSD = mSIBSSD.list[[j]], U2 = U2, b1 = b1, n2 = n2)  
+    }
+
+    for(j in 1:particle){
+      if(BayesianD.value[j] > LB[[j]]$value){
+        LB[[j]] <- list(design = mSIBSSD.list[[j]], value = BayesianD.value[j])  
+      }
+    }
+    
+    #10: Update the GB
+    if(max(BayesianD.value) > GB$value){
+      GB <- LB[[which.max(BayesianD.value)]] 
+      progress <- 1
+    }
+  
+  record <- c(record,GB$value)
+
+  #11: end while
+  }
+  return(list(GB,record))  
+}
+```
+
+
+###start###
+#test
+```{r}
+m1 <- 5
+m2 <- 5
+m3 <- 5
+b1 <- 4
+b2 <- 5
+n2 <- 4
+# m1 <- 7
+# m2 <- 7
+# m3 <- 8
+# b1 <- 6
+# b2 <- 7
+# b3 <- 24
+# n <- 24
+# n2 <- 4
+#primary.number <- 2
+qLB <- round((m1+m2+m3)/4)
+qGB <- round((m1+m2+m3)/6)
+w.ratio = 0.1
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+
+test <- staggered_level_MSIBSSD_BayesianD_type2(particle = 500,
+                                                U2 = U2, 
+                                                m1 = m1, 
+                                                m2 = m2, 
+                                                m3 = m3, 
+                                                b1 = b1, 
+                                                n2 = n2, 
+                                                qLB = qLB, 
+                                                qGB = qGB, 
+                                                w.ratio = w.ratio, 
+                                                iteration = 500, 
+                                                early.break = 100)
+Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
+```
+```{r}
+write.csv(test[[1]]$design,"design.csv",row.names = F, col.names = F)
+```
+
+
+```{r}
+x <- cbind(1, test[[1]]$design)
+U1 <- kronecker(diag(b1),matrix(1,n2,1))
+S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2))
+alias.matrix <- round(t(x)%*%solve(S)%*%x)
+abs(alias.matrix) - diag(diag(alias.matrix))
+colSums(abs(alias.matrix) - diag(diag(alias.matrix)))
+colSums(alias.matrix - diag(diag(alias.matrix)))
+```
+
+```{r}
+ex3 <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_Df/16x15_3939712.csv",header = T))
+Dcriterion_staggered(mSSD = ex3, U2 = U2, f = 2, b1 = b1, n2 = n2)
+evaluateMBayesianD(MSSD = ex3, U2 = U2, b1 =b1, n2 = n2)
+```
+
+```{r}
+x <- cbind(1,ex3)
+U1 <- kronecker(diag(b1),matrix(1,n2,1))
+S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2))
+round(t(x)%*%solve(S)%*%x)
+colSums(round(t(x)%*%solve(S)%*%x))
+```
+
+# check first three are primary
+```{r}
+index <- combn(5,3)
+for(i in 1:ncol(index)){
+  for(j in 1:ncol(index)){
+    for(k in 1:ncol(index)){
+      tem <- ex3
+      #w1
+      w1 <- tem[,index[,i]]
+      tem <- tem[,-index[,i]]
+      w1 <- cbind(w1,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #w2
+      w2 <- tem[,index[,j]]
+      tem <- tem[,-index[,j]]
+      w2 <- cbind(w2,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #s
+      s <- tem[,index[,k]]
+      tem <- tem[,-index[,k]]
+      s <- cbind(s,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #print(cbind(w1,w2,s))
+      #print(ncol(cbind(w1,w2,s)))
+      print(paste(i,j,k,evaluateMBayesianD(MSSD = cbind(w1,w2,s), U2 = U2, b1 =b1, n2 = n2)))
+    }
+  }
+}
+```
+
+# check first three are primary
+```{r}
+index <- combn(5,3)
+for(i in 1:ncol(index)){
+  for(j in 1:ncol(index)){
+    for(k in 1:ncol(index)){
+      tem <- ex3
+      #w1
+      w1 <- tem[,index[,i]]
+      tem <- tem[,-index[,i]]
+      w1 <- cbind(w1,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #w2
+      w2 <- tem[,index[,j]]
+      tem <- tem[,-index[,j]]
+      w2 <- cbind(w2,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #s
+      s <- tem[,index[,k]]
+      tem <- tem[,-index[,k]]
+      s <- cbind(s,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #print(cbind(w1,w2,s))
+      #print(ncol(cbind(w1,w2,s)))
+      print(paste(i,j,k,evaluateMBayesianD(MSSD = cbind(w1,w2,s), U2 = U2, b1 =b1, n2 = n2)))
+    }
+  }
+}
+```
+
+
+# check w1, w2 first three are primary
+```{r}
+index <- combn(5,3)
+for(i in 1:ncol(index)){
+  for(j in 1:ncol(index)){
+    for(k in 1:ncol(index)){
+      tem <- ex3
+      #w1
+      w1 <- tem[,index[,i]]
+      tem <- tem[,-index[,i]]
+      w1 <- cbind(w1,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #w2
+      w2 <- tem[,index[,j]]
+      tem <- tem[,-index[,j]]
+      w2 <- cbind(w2,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #s
+      s <- tem[,index[,k]]
+      tem <- tem[,-index[,k]]
+      s <- cbind(s,tem[,c(1,2)])
+      tem <- tem[,-c(1,2)]
+      
+      #print(cbind(w1,w2,s))
+      #print(ncol(cbind(w1,w2,s)))
+      print(paste(i,j,k,evaluateMBayesianD(MSSD = cbind(w1,w2,s), U2 = U2, b1 =b1, n2 = n2)))
+    }
+  }
+}
+```

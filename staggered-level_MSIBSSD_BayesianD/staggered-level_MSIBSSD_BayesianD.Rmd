@@ -357,12 +357,13 @@ staggered_level_MSIBSSD_BayesianD_while <- function(particle,U2, m1, m2, m3, b1,
   return(list(GB,record))  
 }
 ```
+
 ```{r}
-m1 <- 2
-m2 <- 2
-m3 <- 2
-b1 <- 4
-b2 <- 5
+m1 <- 3
+m2 <- 3
+m3 <- 4
+b1 <- 2
+b2 <- 3
 n2 <- 4
 
 # get U2
@@ -372,15 +373,45 @@ U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
 U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
 
 ```
+```{r}
+library(tictoc)
+tic()
+m1 <- 3
+m2 <- 3
+m3 <- 4
+b1 <- 2
+b2 <- 3
+n2 <- 4
+qLB <- floor((m1+m2+m3)/4)
+qGB <- floor((m1+m2+m3)/6)
+
+w.ratio <- 0.1
+
+test <- staggered_level_MSIBSSD_BayesianD(particle = 500,
+                                          U2 = U2, 
+                                          m1 = m1, 
+                                          m2 = m2, 
+                                          m3 = m3, 
+                                          b1 = b1, 
+                                          n2 = n2, 
+                                          qLB = qLB, 
+                                          qGB = qGB, 
+                                          w.ratio = w.ratio,
+                                          iteration = 500,
+                                          early.break = 100)
+                                           
+#Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
+toc()
+```
 
 ```{r}
 library(tictoc)
 tic()
-m1 <- 2
-m2 <- 2
-m3 <- 2
-b1 <- 4
-b2 <- 5
+m1 <- 3
+m2 <- 3
+m3 <- 4
+b1 <- 2
+b2 <- 3
 n2 <- 4
 qLB <- floor((m1+m2+m3)/3)
 qGB <- floor((m1+m2+m3)/6)
@@ -396,7 +427,7 @@ test <- staggered_level_MSIBSSD_BayesianD_while(particle = 500,
                                           qLB = qLB, 
                                           qGB = qGB, 
                                           w.ratio = w.ratio, 
-                                          success.value = 1.6359, 
+                                          success.value = 1.2083458, 
                                           early.break = 100)
 #Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
 toc()
@@ -404,6 +435,7 @@ toc()
 ```{r}
 test
 Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = 2, b1 = b1, n2 = n2)
+#write.csv(test[[1]]$design,"example2.csv",row.names = F, col.names = F)
 ```
 
 # record time and iteration
@@ -422,7 +454,7 @@ for(i in 1:100){
                                                       qLB = qLB, 
                                                       qGB = qGB, 
                                                       w.ratio = w.ratio, 
-                                                      success.value = 1.6359, 
+                                                      success.value = 1.2083458, 
                                                       early.break = 100)
   ))
   print(i)
@@ -441,3 +473,46 @@ write.csv(iteration.record,"iteration_record.csv",row.names = F, col.names = F)
 ```{r}
 write.csv(time.record,"time_record.csv",row.names = F, col.names = F)
 ```
+
+#######
+example 3
+```{r}
+ex3 <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_Df/16x15_3939712.csv",header = T))
+evaluateMBayesianD(MSSD = ex3, U2 = U2, b1 =b1, n2 = n2)
+```
+
+```{r}
+m1 <- 5
+m2 <- 5
+m3 <- 5
+b1 <- 4
+b2 <- 5
+n2 <- 4
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+
+qLB <- floor((m1+m2+m3)/4)
+qGB <- floor((m1+m2+m3)/6)
+w.ratio = 0.1
+test <- staggered_level_MSIBSSD_BayesianD(particle = 800,
+                                          U2 = U2, 
+                                          m1 = m1, 
+                                          m2 = m2, 
+                                          m3 = m3, 
+                                          b1 = b1, 
+                                          n2 = n2, 
+                                          qLB = qLB, 
+                                          qGB = qGB, 
+                                          w.ratio = w.ratio, 
+                                          iteration = 500, 
+                                          early.break = 100)
+Dcriterion_staggered(mSSD = test[[1]]$design, U2 = U2, f = f, b1 = b1, n2 = n2)
+```
+```{r}
+write.csv(test[[1]]$design,"design_intereaction.csv",row.names = F, col.names = F)
+```
+
+

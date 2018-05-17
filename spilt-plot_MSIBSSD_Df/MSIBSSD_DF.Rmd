@@ -30,7 +30,7 @@ source_rmd <- function(file, local = FALSE, ...){
 #read functions
 ```{r}
 Sys.setlocale('LC_ALL','C')
-source_rmd("D:/statisic/Master_thesis/MSIBSSD_DF/MSIBSSD_DF_functions.Rmd")
+source_rmd("D:/statisic/Master_thesis/spilt-plot_MSIBSSD_Df/MSIBSSD_DF_functions.Rmd")
 ```
 
 ```{r}

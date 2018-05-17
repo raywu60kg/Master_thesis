@@ -1,5 +1,5 @@
 ---
-title: "strip-plot_MSIBSSD_Df"
+title: "staggered-level_MSIBSSD_Df"
 output: html_document
 ---
 ```{r}
@@ -19,13 +19,11 @@ source_rmd("D:/statisic/Master_thesis/staggered-level_MSIBSSD_Df/staggered-level
 ```
 
 ```{r}
-m1 <- 7
-m2 <- 7
-m3 <- 8
-b1 <- 6
-b2 <- 7
-b3 <- 24
-n <- 24
+m1 <- 3
+m2 <- 3
+m3 <- 4
+b1 <- 2
+b2 <- 3
 n2 <- 4
 
 # get U2
@@ -39,13 +37,14 @@ table8 <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_
 
 # Df values
 ```{r}
-library(tictoc)
-tic()
 Dcriterion_staggered(MSSD = table8, U2 = U2, f = 2, b1 = b1, n2 = n2)
 Dcriterion_staggered(MSSD = table8, U2 = U2, f = 3, b1 = b1, n2 = n2)
 Dcriterion_staggered(MSSD = table8, U2 = U2, f = 4, b1 = b1, n2 = n2)
 Dcriterion_staggered(MSSD = table8, U2 = U2, f = 5, b1 = b1, n2 = n2)
-toc()
+```
+```{r}
+Dcriterion_staggered(MSSD = table8[,-1], U2 = U2, f = 2, b1 = b1, n2 = n2)
+Dcriterion_add_delete(MSSD = table8[,-1], column = table8[,1], U2 = U2, f = 2, b1 = b1, n2 = n2)
 ```
 
 # Bayesian D value
@@ -55,7 +54,7 @@ evaluateMBayesianD(MSSD = table8, U2 = U2, b1 =b1, n2 = n2)
 
 # main function
 ```{r}
-staggered_level_MSIBSSD_Df <- function(particle,U2, m1, m2, m3, b1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
+staggered_level_MSIBSSD_Df <- function(particle,U2, f = 2, m1, m2, m3, b1, n2, qLB, qGB, w.ratio, iteration, early.break = 100){
   
   #1: Randomly generate a set of balanced N*m SSDs as initial particles
   mSIBSSD.list <- list()
@@ -170,18 +169,22 @@ staggered_level_MSIBSSD_Df <- cmpfun(staggered_level_MSIBSSD_Df)
 ###start###
 #test
 ```{r}
-m1 <- 7
-m2 <- 7
-m3 <- 8
-b1 <- 6
-b2 <- 7
-b3 <- 24
-n <- 24
+m1 <- 5
+m2 <- 5
+m3 <- 5
+b1 <- 4
+b2 <- 5
 n2 <- 4
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+
 qLB <- floor((m1+m2+m3)/4)
 qGB <- floor((m1+m2+m3)/6)
-
-w.ratio = 0.5
+f <- 2
+w.ratio = 0.1
 test <- staggered_level_MSIBSSD_Df(particle = 15,
                                           U2 = U2, 
                                           m1 = m1, 
@@ -196,6 +199,7 @@ test <- staggered_level_MSIBSSD_Df(particle = 15,
                                           early.break = 100)
 evaluateMBayesianD(MSSD = test[[1]]$design, U2 = U2, b1 = b1, n2 = n2)
 ```
+
 ```{r}
 test <- staggered_level_MSIBSSD_Df(particle = 500,
                                    U2 = U2, 
@@ -210,6 +214,13 @@ test <- staggered_level_MSIBSSD_Df(particle = 500,
                                    iteration = 500, 
                                    early.break = 100)
 
-evaluateMBayesianD(MSSD = test[[1]]$design, U2 = U2, b1 = b1, n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 1, U2 = U2, b1 = b1, n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 2, U2 = U2, b1 = b1, n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 3, U2 = U2, b1 = b1, n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 4, U2 = U2, b1 = b1, n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 5, U2 = U2, b1 = b1, n2 = n2)
+#evaluateMBayesianD(MSSD = test[[1]]$design, U2 = U2, b1 = b1, n2 = n2)
 ```
-
+```{r}
+write.csv(test[[1]]$design,"16x15_3939712.csv",row.names = F, col.names = F)
+```

@@ -21,7 +21,8 @@ Dcriterion_staggered <- function(mSSD, U2, f = f, b1 = b1, n1 = n1, n2 = n2){
 
 ```{r}
 evaluateMBayesianD <- function(MSSD, U2, b1 ,n2){
-  tau <- sqrt(5)
+  #tau <- sqrt(5)
+  tau <- sqrt(2)
   m <- ncol(MSSD)
   
   #primary

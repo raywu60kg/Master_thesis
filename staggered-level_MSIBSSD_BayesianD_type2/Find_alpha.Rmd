@@ -1,0 +1,252 @@
+---
+title: "Find_alpha"
+output: html_document
+---
+```{r}
+m1 <- 5
+m2 <- 5
+m3 <- 5
+b1 <- 4
+b2 <- 5
+n2 <- 4
+MSSD <- generateSLD(m1 = m1, m2 = m2, m3 = m3, b1 = b1, n2 = n2)
+
+```
+
+
+```{r}
+find_alpha_R <- function(m){
+  random.row <- sample.int(2^m,10000) #choose 10000 times to approximate true value
+
+  index <- c(1,-1)
+  inf.matrix <- c()
+  # rep(rep(c(1,-1),each = n/2),1)
+  # rep(rep(c(1,-1),each = n/4),2)
+  #for(i in 1:n){
+  for(i in random.row){
+    tem.matrix <- numeric(m)+1
+    tem <- i
+    for(j in 1:m){
+      if(tem == 0){
+        break
+      }else{
+        tem <- tem/2
+        quotient <- floor(tem)
+        remainder <- tem - quotient 
+        tem.matrix[m-j+1] <- index[(remainder != 0)+1]
+        tem <- quotient 
+      }
+      
+    }
+    
+    inf.matrix <- rbind(inf.matrix, tem.matrix)
+  }
+  
+  # Defined pri and pot
+  xpri <- cbind(1,inf.matrix[,1:div])
+  xpot <- inf.matrix[,(div+1):m]
+  #xpri <- cbind(1,xpri)
+  #solve(t(xpri) %*% xpri) %*% t(xpri) %*% xpot
+  alpha <- as.matrix(lm(xpot~xpri-1)$coefficients)
+  #xpri <- cbind(1,xpri)
+  R <- xpot-xpri%*%alpha
+  R.range <- apply(R,2,max) - apply(R,2,min)
+  #print(alpha)
+  #print(R)
+ 
+  
+  return(list(alpha = alpha, R.range = R.range))      
+}
+```
+
+# primary are supplot, interaction & others are potential
+```{r}
+find_alpha_R <- function(m){
+  random.row <- sample.int(2^m,2^15) #choose 10000 times to approximate true value
+
+  index <- c(1,-1)
+  inf.matrix <- c()
+  # rep(rep(c(1,-1),each = n/2),1)
+  # rep(rep(c(1,-1),each = n/4),2)
+  #for(i in 1:n){
+  for(i in random.row){
+    tem.matrix <- numeric(m)+1
+    tem <- i
+    for(j in 1:m){
+      if(tem == 0){
+        break
+      }else{
+        tem <- tem/2
+        quotient <- floor(tem)
+        remainder <- tem - quotient 
+        tem.matrix[m-j+1] <- index[(remainder != 0)+1]
+        tem <- quotient 
+      }
+      
+    }
+    
+    inf.matrix <- rbind(inf.matrix, tem.matrix)
+  }
+  
+  # Defined pri and pot
+  xpri <- cbind(1,inf.matrix[,(m1+m2+1):(m1+m2+m3)])
+  
+  #squre
+  # xpot <- c()
+  # for(i in 1:ncol(inf.matrix)){
+  #   xpot <- cbind(xpot, inf.matrix[,i] ^ 2)
+  # }
+  
+  xpot <- inf.matrix[,1:(m1+m2)]
+  #interaction
+  inter.index <- combn(ncol(inf.matrix),2)
+  for(i in 1:ncol(inter.index)){
+    xpot <- cbind(xpot, inf.matrix[,inter.index[1,i]] * inf.matrix[,inter.index[2,i]])
+  }
+  xpot <- as.matrix(xpot)
+  #xpri <- cbind(1,xpri)
+  #solve(t(xpri) %*% xpri) %*% t(xpri) %*% xpot
+  alpha <- as.matrix(lm(xpot~xpri-1)$coefficients)
+  #xpri <- cbind(1,xpri)
+  R <- xpot-xpri%*%alpha
+  R.range <- apply(R,2,max) - apply(R,2,min)
+  #R.range <- max(R) - min(R)
+  #print(alpha)
+  #print(R)
+ 
+  
+  return(list(alpha = alpha, R.range = R.range))
+}
+```
+
+```{r}
+
+alpha_R <- find_alpha_R(15)
+print(alpha_R)
+
+```
+
+# primary are supplot, interaction & others are potential
+```{r}
+MSSD
+
+
+#combine
+primary <- cbind(1, MSSD[,(m1+m2+1):(m1+m2+m3)])
+
+
+#potential
+potential <- MSSD[,1:(m1+m2)]
+#interaction
+inter.index <- combn(ncol(MSSD),2)
+for(i in 1:ncol(inter.index)){
+  potential <- cbind(potential, MSSD[,inter.index[1,i]] * MSSD[,inter.index[2,i]])
+}
+potential <- as.matrix(potential)
+print(potential)
+alpha <- alpha_R$alpha
+R.range <- alpha_R$R.range
+
+
+
+xpot<-potential
+R<-xpot-primary%*%alpha
+potential.adj <- c()
+for(i in 1:length(R.range)){
+  z<-R[,i]/R.range[i]
+  potential.adj<-cbind(potential.adj,z)  
+}
+potential.adj
+```
+
+```{r}
+MSSD
+# primary <- cbind(1,MSSD[,1:div])
+# potential <- MSSD[,(div+1):ncol(MSSD)]
+
+#primary
+#m1
+primary.m1 <- MSSD[,1:(b1-1)]
+
+#m2
+primary.m2 <- MSSD[,(m1+1):(m1+b1-1)]
+
+#m3
+#primary.m3 <- MSSD[,(m1+m2+1):(m1+m2+b1-1)]
+
+#combine
+primary <- cbind(1, primary.m1, primary.m2)
+
+
+#potential
+#m1
+potential.m1 <- MSSD[,b1:m1]
+
+#m2
+potential.m2 <- MSSD[,(m1+b1):(m1+m2)]
+
+#m3
+potential.m3 <- MSSD[,(m1+m2+1):(m1+m2+m3)]
+
+#combine
+potential <-cbind(potential.m1, potential.m2, potential.m3)
+
+print(potential)
+alpha <- alpha_R$alpha
+R.range <- alpha_R$R.range
+
+
+
+xpot<-potential
+R<-xpot-primary%*%alpha
+potential.adj <- c()
+for(i in 1:length(R.range)){
+  z<-R[,i]/R.range[i]
+  potential.adj<-cbind(potential.adj,z)  
+}
+potential.adj
+```
+
+```{r}
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+
+evaluateMBayesianD <- function(MSSD, U2, b1 ,n2){
+  tau <- sqrt(1)
+  m <- ncol(MSSD)
+  
+  #primary
+  primary <-cbind(1,MSSD[,1:div])
+  p1 <- ncol(primary)
+  
+  #potential
+  potential <- MSSD[,(div+1):ncol(MSSD)]
+  p2 <- ncol(potential)
+  potential.adj <- potential / 2   
+  
+  #get S 
+  library(Matrix)   
+  U1 <- kronecker(diag(b1),matrix(1,n2,1))
+  S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2)) # 2 is from paper
+  
+  x <- as.matrix(cbind(primary,potential.adj))  
+  K <- diag(c(rep(0,p1),rep(1,p2)))
+  if(qr(primary)$rank==p1){
+        bd<-det(t(x)%*%solve(S)%*%x+K/tau^2)	^(1/(p1+p2))
+       #bd<-1/tr(solve(t(x)%*%solve(S)%*%x+K/tau^2))		        
+	}else{
+		bd<-0
+	}	
+  #bd <- det(t(x)%*%x + K/tau^2)^(1/(p1+p2))
+  return(bd)
+}
+```
+
+```{r}
+evaluateMBayesianD(MSSD = MSSD, U2 = U2, b1 = b1,n2 = n2)
+evaluateMBayesianD(MSSD = test[[1]]$design, U2 = U2, b1 = b1,n2 = n2)
+```
+
