@@ -197,7 +197,7 @@ U2[1:(n2/2),1] <- 1
 U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
 U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
 
-test <- staggered_level_MSIBSSD_BayesianD_type2(particle = 500,
+test <- staggered_level_MSIBSSD_BayesianD_type2(particle = 800,
                                                 U2 = U2, 
                                                 m1 = m1, 
                                                 m2 = m2, 

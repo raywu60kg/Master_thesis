@@ -83,3 +83,14 @@ for(i in 1:length(R.range)){
 }
 potential.adj
 ```
+
+```{r}
+MSSD
+primary <- matrix(1, nrow = nrow(MSSD))
+potential <- MSSD *0.5
+tmp <- matrix(0,16,1)
+for(i in 1:15){
+  tmp <- tmp + primary %*% potential[i]  
+}
+```
+
