@@ -214,13 +214,9 @@ test <- staggered_level_MSIBSSD_Df(particle = 500,
                                    iteration = 500, 
                                    early.break = 100)
 
-evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 1, U2 = U2, b1 = b1, n2 = n2)
-evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 2, U2 = U2, b1 = b1, n2 = n2)
-evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 3, U2 = U2, b1 = b1, n2 = n2)
-evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 4, U2 = U2, b1 = b1, n2 = n2)
-evaluateMBayesianD(MSSD = test[[1]]$design,primary.number = 5, U2 = U2, b1 = b1, n2 = n2)
 #evaluateMBayesianD(MSSD = test[[1]]$design, U2 = U2, b1 = b1, n2 = n2)
 ```
+
 ```{r}
 write.csv(test[[1]]$design,"16x15_3939712.csv",row.names = F, col.names = F)
 ```

@@ -476,9 +476,25 @@ write.csv(time.record,"time_record.csv",row.names = F, col.names = F)
 
 #######
 example 3
+#notation
+```{r}
+m1 <- 5
+m2 <- 5
+m3 <- 5
+b1 <- 4
+b2 <- 5
+n2 <- 4
+# get U2
+U2 <- matrix(0, b1*n2, b2)
+U2[1:(n2/2),1] <- 1
+U2[(n2/2+(b1*n2-n2)+1):(b1*n2),ncol(U2)] <- 1
+U2[((n2/2)+1):(n2/2+(b1*n2-n2)),2:(1+(b2-2))] <- kronecker(diag(b2-2),matrix(1,n2,1))
+```
+
 ```{r}
 ex3 <- as.matrix(read.csv("D:/statisic/Master_thesis/staggered-level_MSIBSSD_Df/16x15_3939712.csv",header = T))
 evaluateMBayesianD(MSSD = ex3, U2 = U2, b1 =b1, n2 = n2)
+Dcriterion_staggered(MSSD = ex3, U2 = U2, f = f, b1 = b1, n2 = n2)
 ```
 
 ```{r}
