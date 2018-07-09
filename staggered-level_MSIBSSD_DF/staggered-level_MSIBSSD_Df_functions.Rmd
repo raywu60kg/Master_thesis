@@ -38,54 +38,6 @@ Dcriterion_add_delete <- function(MSSD, column, U2 = U2, f = f, b1 = b1, n2 = n2
 }
 ```
 
-#consider intereaction
-```{r}
-Dcriterion_staggered <- function(MSSD, U2, f = f, b1 = b1, n2 = n2){
-  # intereaction
-  inter.index <- combn(ncol(MSSD),2)
-  for(i in 1:ncol(inter.index)){
-    MSSD <- cbind(MSSD, MSSD[,inter.index[1,i]] * MSSD[,inter.index[2,i]])
-  }
-  
-  index.matrix <- combn(ncol(MSSD), f)
-  library(Matrix)   
-  U1 <- kronecker(diag(b1),matrix(1,n2,1))
-  S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2)) # 1 is from paper
-  
-  Df <- 0
-  for(i in 1:ncol(index.matrix)){
-    Xf <- cbind(1, MSSD[ ,index.matrix[,i]])
-    #Df <- Df + det(t(Xf) %*% solve(S) %*% Xf)^(1/(f+1))
-    Df <- Df + round(det(t(Xf) %*% solve(S) %*% Xf),6)^(1/(f+1))
-  }
-  return(Df / choose(ncol(MSSD), f))
-}
-```
-
-# Dcriterion_add & Dcriterion_delete
-when Dcriterion_delete the criterion the smaller the better
-when Dcriterion_add the criterion the bigger the better
-```{r}
-Dcriterion_add_delete <- function(MSSD, column, U2 = U2, f = f, b1 = b1, n2 = n2){
-  # intereaction
-  inter.index <- combn(ncol(MSSD),2)
-  for(i in 1:ncol(inter.index)){
-    MSSD <- cbind(MSSD, MSSD[,inter.index[1,i]] * MSSD[,inter.index[2,i]])
-  }
-  
-  index.matrix <- combn(ncol(MSSD), f-1)
-  Df <- 0  
-  library(Matrix)   
-  U1 <- kronecker(diag(b1),matrix(1,n2,1))
-  S <- diag(b1 * n2) + (1 * U1 %*% t(U1)) + (1 * U2 %*% t(U2)) # 1 is from paper
-  for(i in 1:ncol(index.matrix)){
-    Xf <- cbind(1, MSSD[ ,index.matrix[,i]])
-    Xf <- cbind(Xf,column)
-    Df <- Df + det(t(Xf) %*% solve(S) %*% Xf)^(1/(f+1))
-  }
-  return(Df)
-}
-```
 ```{r}
 evaluateMBayesianD <- function(MSSD, U2, b1 ,n2){
   tau <- sqrt(5)
